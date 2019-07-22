@@ -136,7 +136,7 @@ CalcMeanCPUE = function(cpuedata, catch.column="catch", effort.column="effort",
     cpue.results = subset(cpue.results, select = c(season, method, mean, lowCL, uppCL))
     cpue.results = cpue.results[order(cpue.results$method, cpue.results$season), ]
     
-    ymax = max(c(out1$uppCL, out2$uppCL, out3$uppCL, out4$uppCL))
+    ymax = max(c(out1$uppCL, out2$uppCL, out3$uppCL, out4$uppCL),na.rm=T)
     if (ymax>20) ymax = ceiling(ymax/10)*10
     if (ymax>200) ymax = ceiling(ymax/100)*100
     
