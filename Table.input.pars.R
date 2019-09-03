@@ -2,7 +2,7 @@
 library(htmlTable)
 library(xtable)
 #source all input parameters
-source("C:/Matias/Analyses/SOURCE_SCRIPTS/Population dynamics/Organise input parameters.R")
+source("C:/Matias/Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/Organise input parameters.R")
 
 specify_decimal <- function(x, k) format(round(x, k), nsmall=k)
 is.wholenumber <-function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol

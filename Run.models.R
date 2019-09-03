@@ -11,7 +11,7 @@
 
 
 #source Handy function for plotting
-source.hnld="C:/Matias/Analyses/SOURCE_SCRIPTS/Population dynamics/"
+source.hnld="C:/Matias/Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/"
 fn.source=function(script)source(paste(source.hnld,script,sep=""))
 fn.source("fn.fig.R")
 library(expm)
@@ -123,7 +123,7 @@ if(First.run=="YES")
   Ktch.All.zn2.1975=fn.combo.ktch(list(TC.TDGDLF.zn2,TC.other.zn2,TC.rec.zn2))
   
     #A.3. TDGDLF Standardised CPUE
-  Cpue.folly=data.list$cpue.annual.TDGDLF.folly
+  if('cpue.annual.TDGDLF.folly'%in%names(data.list))Cpue.folly=data.list$cpue.annual.TDGDLF.folly
   
       #Monthly
   Cpue.all=data.list$cpue.annual.TDGDLF
@@ -624,11 +624,10 @@ if(First.run=="YES")
     {
       prop.eff=subset(TIME,finyear==yrs[yyy],select=c(Mesh_6.5,Mesh_7))
       Sel.dummy=data.frame(Mesh_6.5=Sel_6.5,Mesh_7=Sel_7)
-      Sel.dummy[,1]=Sel.dummy$Mesh_6.5*prop.eff$Mesh_6.5
-      Sel.dummy[,2]=Sel.dummy$Mesh_7*prop.eff$Mesh_7
-      
-      Tot.Sel=apply(Sel.dummy, 1, function(x) max(x) )
-      Str[,yyy]=Tot.Sel/max(Tot.Sel)
+      Sel.dummy$Mesh_6.5=Sel.dummy$Mesh_6.5*prop.eff$Mesh_6.5
+      Sel.dummy$Mesh_7=Sel.dummy$Mesh_7*prop.eff$Mesh_7
+      Sel.sum=rowSums(Sel.dummy)
+      Str[,yyy]=Sel.sum/max(Sel.sum)
     }
     return(Str)
   }  
@@ -1309,7 +1308,7 @@ if(First.run=="YES")
   
     #Monthly
   Cpue.all=Cpue.all[order(Cpue.all$Finyear),]
-  Cpue.folly=Cpue.folly[order(Cpue.folly$FINYEAR),]
+  if(exists('Cpue.folly'))Cpue.folly=Cpue.folly[order(Cpue.folly$FINYEAR),]
   if(nrow(Cpue.West)>0) Cpue.West=Cpue.West[order(Cpue.West$Finyear),]
   if(nrow(Cpue.zn1)>0)  Cpue.zn1=Cpue.zn1[order(Cpue.zn1$Finyear),]
   if(nrow(Cpue.zn2)>0)  Cpue.zn2=Cpue.zn2[order(Cpue.zn2$Finyear),]
@@ -1409,11 +1408,9 @@ if(First.run=="YES")
   fn.fig("Input_CPUE",2000, 2000)   
   par(mfcol=c(2,1),mai=c(.75,.75,.05,.175),las=1,mgp=c(2,.6,0),cex.axis=1.25,cex.lab=1.75)
   
-  plot(Yr[id.Yrs],Cpue.all[,match('Mean',names(Cpue.all))],ylab="",xlab="",
-       ylim=c(0,max(c(Cpue.all[,match('Mean',names(Cpue.all))],Cpue.folly[,match("cpue",names(Cpue.folly))]))))
+  plot(Yr[id.Yrs],Cpue.all[,match('Mean',names(Cpue.all))],ylab="",xlab="")
   points(Yr[which(Yr%in%as.numeric(substr(Cpue.all.monthly$Finyear,1,4)))],Cpue.all.monthly$Mean,pch=19)
-  lines(Yr[id.Yrs],Cpue.folly[id.Yrs,match("cpue",names(Cpue.folly))],lwd=2.5,col=2)
-  legend("topright",c("Standardised","Effective"),text.col=1:2,cex=1.5,bty='n')
+  legend("topright",c("Standardised"),text.col=1:2,cex=1.5,bty='n')
   
   plot(Yr[id.Yrs],Cpue.all[,match('Mean',names(Cpue.all))],ylab="",xlab="",col="transparent",ylim=c(0,max(c(Cpue.zn1$Mean,Cpue.zn2$Mean,Cpue.West$Mean))))
   if(nrow(Cpue.West)>0)   
@@ -1679,7 +1676,8 @@ if(First.run=="YES")
                   Nobs.Age.Grw.F=NA,Nobs.Age.Grw.M=NA,Age.Grw.F=NA,Age.Grw.M=NA,Rho2=NA,Rho3=NA,
                   MaxF=NA,add_Finit_prior=NA,
                   mu_F_init=NA,Ln_SD_F_init=NA,Po=NA,r_max=NA,add_r_prior=NA,mu_r=NA,SD_r=NA,Mov_trans_mat=NA,Move_age=NA,
-                  Phases=NA,n_par=NA,Do_var=NA,Var1=NA,Var2=NA,Do.move=NA)
+                  Phases=NA,n_par=NA,Do_var=NA,Var1=NA,Var2=NA,Do.move=NA,
+                  Calc_MSY=0,yrs_Fishing.mort=1,Fishing.mort=0,Rec.error_MSY=0)
     
     #1. Add values
     #1.1. Number of years of catch
@@ -2084,7 +2082,7 @@ if(First.run=="YES")
       }
       
       # Recruitment error for future projections
-      La.lista$Rec.error=rlnorm(1+La.lista$yrs_ktch-yr.start, meanlog = log(1), sdlog = 0.05)
+      La.lista$Rec.error=rlnorm(1+La.lista$yrs_ktch-yr.start, meanlog = log(1), sdlog = MSY.sd.rec)
       
     }
     if(d$Model_type=="Length-based")
@@ -2250,10 +2248,10 @@ if(First.run=="YES")
          #Single zone
       if(d$Spatial_structure=="Single zone")
       {
-        La.lista$CPUE_eff=Cpue.folly[,match("cpue",names(Cpue.folly))]
         La.lista$CPUE=Cpue.all[NN,match('Mean',names(Cpue.all))]     
         La.lista$CPUE.CV=Cpue.all[NN,match('CV',names(Cpue.all))]  
-        
+        if(exists('Cpue.folly')) La.lista$CPUE_eff=Cpue.folly[,match("cpue",names(Cpue.folly))] else
+          La.lista$CPUE_eff=rep(1,length(La.lista$CPUE))
         if(d$CPUE=="Stand.hours")
         {
           La.lista$CPUE=Cpue.all.hours[NN,match('Mean',names(Cpue.all.hours))]
@@ -2295,11 +2293,12 @@ if(First.run=="YES")
         La.lista$CPUE.CV[is.na(La.lista$CPUE.CV)]=-100
 
 
-        La.lista$CPUE_eff=Cpue.folly[,match("cpue",names(Cpue.folly))]
+        if(exists('Cpue.folly')) La.lista$CPUE_eff=Cpue.folly[,match("cpue",names(Cpue.folly))] else
+          La.lista$CPUE_eff=rep(1,length(La.lista$CPUE))
       }
       
       # Recruitment error for future projections
-      La.lista$Rec.error=rlnorm(La.lista$yrs_ktch, meanlog = log(1), sdlog = 0.05)
+      La.lista$Rec.error=rlnorm(La.lista$yrs_ktch, meanlog = log(1), sdlog = MSY.sd.rec)
       
     }
     
@@ -2650,7 +2649,7 @@ if(First.run=="YES")
         }
       }
       n$yrs_ktch=n$yrs_ktch+yrs.projections
-      n$Rec.error=c(n$Rec.error,rlnorm(yrs.projections, meanlog = log(1), sdlog = 0))   
+      n$Rec.error=c(n$Rec.error,rlnorm(yrs.projections, meanlog = log(1), sdlog = MSY.sd.rec))   
       
       
       #Don't estimate
@@ -2853,6 +2852,100 @@ if(First.run=="YES")
   }
 }
 
+#4. Derive MSY quantities
+
+#Control if doing MSY   #add this to Assessment.R
+MSY.yrs=100  
+MSY.sd.rec=0    #no recruitment deviations (in log space)
+#MSY.sd.rec=0.05
+Do.MSY="NO"
+F.vec=seq(.01,.15,by=.01)
+
+if(Do.MSY=="YES")
+{
+  fn.MSY=function(MODEL,F.mort,yrs.projections,sdlog.rec)
+  {
+    F.mort=rep(F.mort,yrs.projections)
+    
+    setPath()
+    #setPath(Scenarios[match(MODEL,Scenarios$Model),]$Model)  #use this one after testing
+    A=getwd()
+    
+    if(!file.exists(file.path(getwd(), "MSY"))) dir.create(file.path(getwd(), "MSY"))  
+    setwd(file.path(getwd(), "MSY"))
+    
+    
+    #1. create new pin file (use MLE)
+    if(f==1)file.copy(paste(A,paste("/",Spec,".par",sep=""),sep=""), paste(Spec,".pin",sep=""),
+                      overwrite =T)
+    
+    
+    #2. create new .dat file  
+    n=Inputs[[match(MODEL,names(Inputs))]]
+    
+    #add future F and rec deviations
+    n$Fishing.mort=F.mort
+    n$yrs_Fishing.mort=yrs.projections
+    n$Rec.error_MSY=rlnorm(yrs.projections, meanlog = log(1), sdlog = sdlog.rec) 
+    
+    #don't estimate
+    n$Phases=-abs(n$Phases)
+    n$Phases[1]=1
+    
+    #turn on switch for calculating MSY
+    n$Calc_MSY=1
+    
+    #export new .dat file
+    FILE=paste(Spec,".dat",sep="")
+    nzones=n$nzone
+    ModDims=unlist(c(yr.start,yr.end,nzones))
+    Hdr="#Basic model dimensions (yr.start, yr.end, nzones)"
+    write(Hdr,file = FILE)
+    write(ModDims,file = FILE,sep = "\t",append=T)
+    for(k in (length(ModDims)+1):length(n))
+    {
+      nn=n[[k]]
+      if(is.data.frame(nn)|is.matrix(nn))
+      {
+        Hdr=paste("#",paste(c(names(n)[k],"(",names(nn),")"),collapse=' '))
+        write(Hdr,file = FILE,append=T)      
+        write.table(nn,file = FILE,row.names=F,col.names=F,append=T)
+      }else
+      {
+        Hdr=paste("#",names(n)[k],sep='')
+        write(Hdr,file = FILE,append=T)
+        write(n[[k]],file = FILE,sep = "\t",append=T)
+      }
+    }
+    
+    
+    #3. copy .tpl
+    if(f==1)file.copy(paste(A,paste("/",Spec,".tpl",sep=""),sep=""), paste(Spec,".tpl",sep=""),
+                      overwrite =T)
+    
+    #4. run .tpl
+    args=paste(paste("./",Spec, " -ind ", paste(Spec,".dat",sep="")," -est",sep=""), sep="")
+    clean_admb(Spec)
+    compile_admb(Spec,verbose=T)
+    system(args)
+    Report=reptoRlist(paste(Spec,".rep",sep=""))  
+    
+    
+    #5. Extract equilibrium Fmsy, Bmsy, MSY
+    ouT=data.frame(Fishing=F.mort[1],MSY=Report$Est_catch_MSY[yrs.projections],BMSY=Report$Total_biom_MSY[yrs.projections])
+    
+    return(ouT)
+    
+  }
+  Store.MSY=vector('list',length(F.vec))
+  names(Store.MSY)=F.vec
+  for(f in 1:length(F.vec))
+  {
+    Store.MSY[[f]]=fn.MSY(MODEL="Base case",F.mort=F.vec[f],yrs.projections=MSY.yrs,sdlog.rec=MSY.sd.rec)
+    
+  }
+  
+}
 
 #Profile likelikhood for Fo (run with args -lprof)
 # note: ADMB cannot calculate the profile for S3
@@ -2922,7 +3015,7 @@ fn.comp.ob.pred=function(what,what1,where.leg)
   }else lines(Yrs,PRED[1:length(Yrs)],col=CL,lwd=3)
   if(what%in%c("CPUE_out","CPUE_eff"))
   {
-    if(!is.na(match("CPUE_SD_out",names(MOD))))legend(where.leg,c("observed (± CV)","predicted"),bty='n',pch=c(19,NA),cex=2,lty=c(NA,1),col=c("black",CL),lwd=3)else
+    if(!is.na(match("CPUE_SD_out",names(MOD))))legend(where.leg,c("observed (? CV)","predicted"),bty='n',pch=c(19,NA),cex=2,lty=c(NA,1),col=c("black",CL),lwd=3)else
       legend(where.leg,c("observed","predicted"),bty='n',pch=c(19,NA),cex=2,lty=c(NA,1),col=c("black",CL),lwd=3)
   } else
   {
@@ -3279,7 +3372,7 @@ fn.comp.ob.pred.spatial=function(what,what1,where.leg,Plot.dims)
   }
   if(Plot.dims=="YES")
   {
-    legend(where.leg,c("observed (± CV)","predicted"),bty='n',pch=c(21,NA),cex=1.75,lty=c(NA,1),
+    legend(where.leg,c("observed (? CV)","predicted"),bty='n',pch=c(21,NA),cex=1.75,lty=c(NA,1),
            col=c("grey40","black"),pt.bg=c("grey80",""),lwd=3)
     axis(1,seq(Yrs[1],Yrs[length(Yrs)],5),seq(Yrs[1],Yrs[length(Yrs)],5),tck=-0.04,cex.axis=1.5)
   }
@@ -3768,7 +3861,7 @@ fn.model.outputs=function(SCENARIO)
       {
         fn.lay.single(c(.8,1,.25,.05))
         comp.fn.comp.ob.pred(what="CPUE_out",what1="Est_CPUE_out",LW=LW)    
-        legend('topright',c("observed (± CV)","predicted"),bty='n',pch=c(21,NA),cex=1.5,lty=c(NA,1),
+        legend('topright',c("observed (? CV)","predicted"),bty='n',pch=c(21,NA),cex=1.5,lty=c(NA,1),
                pt.bg=c("grey80",NA),col=c("grey40","black"),lwd=2)
       }
       if(Spatial.Str=="Three zones")
@@ -3787,7 +3880,7 @@ fn.model.outputs=function(SCENARIO)
     {
       fn.lay.single(c(.8,.8,.5,.05))
       comp.fn.comp.ob.pred(what="CPUE_out",what1="Est_CPUE_out",LW=LW)    
-      if(!is.na(id))legend('topright',c("observed (± CV)","predicted"),bty='n',pch=c(21,NA),cex=1.25,lty=c(NA,1),
+      if(!is.na(id))legend('topright',c("observed (? CV)","predicted"),bty='n',pch=c(21,NA),cex=1.25,lty=c(NA,1),
              pt.bg=c("grey80",NA),col=c("grey40","black"),lwd=2)else
                legend('topright',c("observed","predicted"),bty='n',pch=c(21,NA),cex=1.25,lty=c(NA,1),
                       pt.bg=c("grey80",NA),col=c("grey40","black"),lwd=2)
@@ -4627,7 +4720,7 @@ fn.par.table=function(Scens,Rshp)
   CoefsS=do.call(rbind,CoefsS)
   if(Rshp=="YES")
   {
-    Par.tbl$MLE_SD=with(Par.tbl,paste(MLE,SD,sep=" ±"))
+    Par.tbl$MLE_SD=with(Par.tbl,paste(MLE,SD,sep=" ?"))
     wide <- reshape(subset(Par.tbl,select=c(Scenario,Parameter,MLE_SD)), 
                     v.names = "MLE_SD", idvar = "Scenario",timevar = "Parameter", direction = "wide")
     wide[is.na(wide)]="N/A"
