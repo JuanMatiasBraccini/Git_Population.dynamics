@@ -2853,98 +2853,173 @@ if(First.run=="YES")
 }
 
 #4. Derive MSY quantities
-
-#Control if doing MSY   #add this to Assessment.R
-MSY.yrs=100  
-MSY.sd.rec=0    #no recruitment deviations (in log space)
-#MSY.sd.rec=0.05
-Do.MSY="NO"
-F.vec=seq(.01,.15,by=.01)
-
 if(Do.MSY=="YES")
 {
-  fn.MSY=function(MODEL,F.mort,yrs.projections,sdlog.rec)
+  library(r4ss)
+  library(mvtnorm)      #for multivariate normal pdf
+  
+  fn.MSY=function(MODEL,F.mort,yrs.projections,sdlog.rec,n.SIM)   
   {
-    F.mort=rep(F.mort,yrs.projections)
-    
-    setPath()
-    #setPath(Scenarios[match(MODEL,Scenarios$Model),]$Model)  #use this one after testing
+    #set up files and directories
+    setPath(Scenarios[match(MODEL,Scenarios$Model),]$Model)  
     A=getwd()
-    
-    if(!file.exists(file.path(getwd(), "MSY"))) dir.create(file.path(getwd(), "MSY"))  
+    if(!file.exists(file.path(getwd(), "MSY"))) dir.create(file.path(getwd(), "MSY")) 
     setwd(file.path(getwd(), "MSY"))
     
+    #copy .tpl
+    if(!file.exists(paste(Spec,"tpl",sep="")))file.copy(paste(A,paste("/",Spec,".tpl",sep=""),sep=""), 
+                                paste(Spec,".tpl",sep=""), overwrite =T)
     
-    #1. create new pin file (use MLE)
-    if(f==1)file.copy(paste(A,paste("/",Spec,".par",sep=""),sep=""), paste(Spec,".pin",sep=""),
-                      overwrite =T)
-    
-    
-    #2. create new .dat file  
-    n=Inputs[[match(MODEL,names(Inputs))]]
-    
-    #add future F and rec deviations
-    n$Fishing.mort=F.mort
-    n$yrs_Fishing.mort=yrs.projections
-    n$Rec.error_MSY=rlnorm(yrs.projections, meanlog = log(1), sdlog = sdlog.rec) 
-    
-    #don't estimate
-    n$Phases=-abs(n$Phases)
-    n$Phases[1]=1
-    
-    #turn on switch for calculating MSY
-    n$Calc_MSY=1
-    
-    #export new .dat file
-    FILE=paste(Spec,".dat",sep="")
-    nzones=n$nzone
-    ModDims=unlist(c(yr.start,yr.end,nzones))
-    Hdr="#Basic model dimensions (yr.start, yr.end, nzones)"
-    write(Hdr,file = FILE)
-    write(ModDims,file = FILE,sep = "\t",append=T)
-    for(k in (length(ModDims)+1):length(n))
+    ouT=vector('list',n.SIM)
+    for(m in 1:n.SIM)
     {
-      nn=n[[k]]
-      if(is.data.frame(nn)|is.matrix(nn))
+      #1. create new pin file (use multivariate sample from MLE)
+      MLE=read.admbFit(paste(A,paste("/",Spec,sep=""),sep=""))
+      n.mle=1:MLE$nopar
+      Nms=MLE$names[n.mle]
+      Rand.par=c(rmvnorm(1,mean=MLE$est[n.mle],sigma=MLE$cov[n.mle,n.mle]))
+      names(Rand.par)=Nms
+      Pin.pars=scan(paste(A,paste("/",Spec,".pin",sep=""),sep=""),what = list("", "", ""))
+      Names.pin.pars=Pin.pars[[2]][-1]
+      Val.pin.pars=as.numeric(Pin.pars[[3]][-1])
+      names(Val.pin.pars)=Names.pin.pars
+      id.estim.pars=match(Nms,Names.pin.pars)  
+      Val.pin.pars[id.estim.pars]=Rand.par
+      par.nms=names(Val.pin.pars)
+      FILE=paste(Spec,".pin",sep="")
+      write("# Input parameters",file = FILE)
+      for(k in 1:length(Val.pin.pars))
       {
-        Hdr=paste("#",paste(c(names(n)[k],"(",names(nn),")"),collapse=' '))
-        write(Hdr,file = FILE,append=T)      
-        write.table(nn,file = FILE,row.names=F,col.names=F,append=T)
-      }else
-      {
-        Hdr=paste("#",names(n)[k],sep='')
+        Hdr=paste("#",par.nms[k])
         write(Hdr,file = FILE,append=T)
-        write(n[[k]],file = FILE,sep = "\t",append=T)
+        write(Val.pin.pars[k],file = FILE,sep = "\t",append=T)
       }
+      
+      #create dat file and run model under each assumed F value
+      dummy1=vector('list',length(F.mort))
+      for(f in 1:length(F.mort))
+      {
+        #2. create new .dat file  
+        n=Inputs[[match(MODEL,names(Inputs))]]
+        
+        #add future F and rec deviations
+        n$Fishing.mort=rep(F.mort[f],yrs.projections)
+        n$yrs_Fishing.mort=yrs.projections
+        n$Rec.error_MSY=rlnorm(yrs.projections, meanlog = log(1), sdlog = sdlog.rec) 
+        
+        #don't estimate
+        n$Phases=-abs(n$Phases)
+        n$Phases[1]=1
+        
+        #turn on switch for calculating MSY
+        n$Calc_MSY=1
+        
+        #export new .dat file
+        FILE=paste(Spec,".dat",sep="")
+        nzones=n$nzone
+        ModDims=unlist(c(yr.start,yr.end,nzones))
+        Hdr="#Basic model dimensions (yr.start, yr.end, nzones)"
+        write(Hdr,file = FILE)
+        write(ModDims,file = FILE,sep = "\t",append=T)
+        for(k in (length(ModDims)+1):length(n))
+        {
+          nn=n[[k]]
+          if(is.data.frame(nn)|is.matrix(nn))
+          {
+            Hdr=paste("#",paste(c(names(n)[k],"(",names(nn),")"),collapse=' '))
+            write(Hdr,file = FILE,append=T)      
+            write.table(nn,file = FILE,row.names=F,col.names=F,append=T)
+          }else
+          {
+            Hdr=paste("#",names(n)[k],sep='')
+            write(Hdr,file = FILE,append=T)
+            write(n[[k]],file = FILE,sep = "\t",append=T)
+          }
+        }
+        
+        #4. run .tpl
+        args=paste(paste("./",Spec, " -ind ", paste(Spec,".dat",sep="")," -est",sep=""), sep="")
+        if(!file.exists(paste(Spec,".exe",sep="")))compile_admb(Spec,verbose=T)
+        suppressWarnings({Report=system(args, intern = TRUE)})
+        
+        
+        #5. Extract equilibrium Fmsy, Bmsy, MSY
+        B_virgin=as.numeric(Report[match("Virgin_Total_biom",Report)+1])
+        B_virgin_spawning=as.numeric(Report[match("Virgin_Spawn_Biom",Report)+1])
+        MSY=as.numeric(Report[match("Total_ktch_MSY",Report)+yrs.projections])
+        Bmsy_total=as.numeric(Report[match("Total_biom_MSY",Report)+yrs.projections])
+        Bmsy_spawning=as.numeric(Report[match("Female_Spawning_biom_MSY",Report)+yrs.projections])
+        dummy1[[f]]=data.frame(Fishing=F.mort[f],MSY=MSY,
+                               B_virgin=B_virgin,Bmsy_total=Bmsy_total,
+                               B_virgin_spawning=B_virgin_spawning,Bmsy_spawning=Bmsy_spawning)
+      }
+      
+      res=do.call(rbind,dummy1)
+      
+      fit=smooth.spline(res$Fishing,res$MSY)
+      pred.prime <- data.frame(predict(fit, deriv=1))
+      id.fmsy=which.min(abs(pred.prime$y))
+      MSYs=data.frame(Fmsy = pred.prime[id.fmsy, c('x')],
+                      BMSY_total=res$Bmsy_total[id.fmsy],
+                      B_virgin=res$B_virgin[id.fmsy],
+                      BMSY_spawning=res$Bmsy_spawning[id.fmsy],
+                      B_virgin_spawning=res$B_virgin_spawning[id.fmsy],
+                      MSY=res$MSY[id.fmsy])
+      ouT[[m]]=list(res=res,MSYs=MSYs)
     }
-    
-    
-    #3. copy .tpl
-    if(f==1)file.copy(paste(A,paste("/",Spec,".tpl",sep=""),sep=""), paste(Spec,".tpl",sep=""),
-                      overwrite =T)
-    
-    #4. run .tpl
-    args=paste(paste("./",Spec, " -ind ", paste(Spec,".dat",sep="")," -est",sep=""), sep="")
-    clean_admb(Spec)
-    compile_admb(Spec,verbose=T)
-    system(args)
-    Report=reptoRlist(paste(Spec,".rep",sep=""))  
-    
-    
-    #5. Extract equilibrium Fmsy, Bmsy, MSY
-    ouT=data.frame(Fishing=F.mort[1],MSY=Report$Est_catch_MSY[yrs.projections],BMSY=Report$Total_biom_MSY[yrs.projections])
-    
     return(ouT)
-    
   }
-  Store.MSY=vector('list',length(F.vec))
-  names(Store.MSY)=F.vec
-  for(f in 1:length(F.vec))
-  {
-    Store.MSY[[f]]=fn.MSY(MODEL="Base case",F.mort=F.vec[f],yrs.projections=MSY.yrs,sdlog.rec=MSY.sd.rec)
-    
-  }
+    Store.MSY=fn.MSY(MODEL="Base case",F.mort=F.vec,yrs.projections=MSY.yrs,
+                     sdlog.rec=MSY.sd.rec,n.SIM=MSY.sims)
+
   
+  #Export results
+  library(purrr)
+  library(reshape2)
+  library(plotrix)
+  
+  RES=map(Store.MSY, 1)
+  d=array(as.numeric(unlist(RES)), dim=c(nrow(RES[[1]]),ncol(RES[[1]]), length(RES)))
+  RES_stats <- apply(d, c(1,2), quantile, probs=c(0.025,.5,.975), na.rm=TRUE)
+  RES_stats=dcast(melt(RES_stats), Var1+Var2~Var3) 
+  colnames(RES_stats)=c('Percentile','index',names(RES[[1]]))
+  
+  
+  MSYs=map(Store.MSY, 2)
+  d=array(as.numeric(unlist(MSYs)), dim=c(nrow(MSYs[[1]]),ncol(MSYs[[1]]), length(MSYs)))
+  MSY_stats <- apply(d, c(1,2), quantile, probs=c(0.025,.5,.975), na.rm=TRUE)
+  MSY_stats=dcast(melt(MSY_stats), Var1~Var3) 
+  colnames(MSY_stats)=c('Percentile',names(MSYs[[1]]))
+  idd=match(c('Percentile','Fmsy'),names(MSY_stats))
+  MSY_stats[,-idd]=round( MSY_stats[,-idd])
+  
+  inx=length(F.vec)
+  fn.fig("MSY_quantities",2400, 2400)
+  par(mfcol=c(1,1),mar=c(3,3,.1,.1),oma=c(1,1,.01,.1),las=1,mgp=c(1.95,.6,0),cex.lab=1.25)
+  
+  plot(RES_stats$Fishing[1:inx],RES_stats$MSY[(inx+1):(2*inx)],ylab="Equilibrium catch (tonnes)",
+       xlab='Equilibrium fishing mortality',type='l',lwd=2,ylim=c(0,max(RES_stats$MSY)))
+  polygon(x=c(RES_stats$Fishing[1:inx],rev(RES_stats$Fishing[1:inx])),
+          y=c(RES_stats$MSY[1:inx],rev(RES_stats$MSY[(2*inx+1):(3*inx)])),
+          col=rgb(.1,.4,.2,alpha=.3))
+  polygon(x=c(MSY_stats$Fmsy[1],MSY_stats$Fmsy[3],MSY_stats$Fmsy[3],MSY_stats$Fmsy[1]),
+          y=c(-20,-20,max(RES_stats$MSY),max(RES_stats$MSY)),col=rgb(.3,.2,.1,alpha=.3))
+  
+  addtable2plot(0 ,1,MSY_stats,bty="o",display.rownames=F,hlines=F,
+                vlines=TRUE,title="",cex=1,xjust=-0.05)
+  
+  dev.off()
+  
+  fn.fig("Relative spawning biomass",2400, 2400)
+  x=RES_stats$Fishing[1:inx]
+  y=RES_stats$Bmsy_spawning[(inx+1):(2*inx)]/RES_stats$B_virgin_spawning[(inx+1):(2*inx)]  
+  plot(x,y,type='l',lwd=2,col="steelblue",ylab="Relative spawning biomass",
+       xlab='Equilibrium fishing mortality',ylim=c(0,1.05),yaxs = "i",xaxs = "i")
+  #Rel.b=MSY_stats$BMSY_spawning[2]/MSY_stats$B_virgin_spawning[2]
+  #iidd=which.min(abs(y-Rel.b))
+  #lines(c(MSY_stats$Fmsy[2],MSY_stats$Fmsy[2]),c(0,y[iidd]),lwd=2,col='firebrick')
+  #lines(c(MSY_stats$Fmsy[2],0),c(y[iidd],y[iidd]),lwd=2,col='firebrick')
+  dev.off()
 }
 
 #Profile likelikhood for Fo (run with args -lprof)
