@@ -2956,15 +2956,38 @@ if(Do.MSY=="YES")
       
       res=do.call(rbind,dummy1)
       
+      #coarse F sequence
+      # fit=smooth.spline(res$Fishing,res$MSY)
+      # pred.prime <- data.frame(predict(fit, deriv=1))
+      # id.fmsy=which.min(abs(pred.prime$y))
+      # MSYs=data.frame(Fmsy = pred.prime[id.fmsy, c('x')],
+      #                 BMSY_total=res$Bmsy_total[id.fmsy],
+      #                 B_virgin=res$B_virgin[id.fmsy],
+      #                 BMSY_spawning=res$Bmsy_spawning[id.fmsy],
+      #                 B_virgin_spawning=res$B_virgin_spawning[id.fmsy],
+      #                 MSY=res$MSY[id.fmsy])
+      
+      #finer F sequence
+      F.fine.scale=seq(0,1,.01)
       fit=smooth.spline(res$Fishing,res$MSY)
-      pred.prime <- data.frame(predict(fit, deriv=1))
+      pred.prime <- data.frame(predict(fit,x=F.fine.scale, deriv=1))
       id.fmsy=which.min(abs(pred.prime$y))
+      fit.msy <- data.frame(predict(fit,x=F.fine.scale))
+      fit.bmsy=smooth.spline(res$Fishing,res$Bmsy_total)
+      fit.bmsy <- data.frame(predict(fit.bmsy,x=F.fine.scale))
+      fit.B.virgin=smooth.spline(res$Fishing,res$B_virgin)
+      fit.B.virgin <- data.frame(predict(fit.B.virgin,x=F.fine.scale))
+      fit.bmsy.spawn=smooth.spline(res$Fishing,res$Bmsy_spawning)
+      fit.bmsy.spawn <- data.frame(predict(fit.bmsy.spawn,x=F.fine.scale))
+      fit.B.virgin.spawn=smooth.spline(res$Fishing,res$B_virgin_spawning)
+      fit.B.virgin.spawn <- data.frame(predict(fit.B.virgin.spawn,x=F.fine.scale))
       MSYs=data.frame(Fmsy = pred.prime[id.fmsy, c('x')],
-                      BMSY_total=res$Bmsy_total[id.fmsy],
-                      B_virgin=res$B_virgin[id.fmsy],
-                      BMSY_spawning=res$Bmsy_spawning[id.fmsy],
-                      B_virgin_spawning=res$B_virgin_spawning[id.fmsy],
-                      MSY=res$MSY[id.fmsy])
+                      BMSY_total=fit.bmsy[id.fmsy, c('y')],
+                      B_virgin=fit.B.virgin[id.fmsy, c('y')],
+                      BMSY_spawning=fit.bmsy.spawn[id.fmsy, c('y')],
+                      B_virgin_spawning=fit.B.virgin.spawn[id.fmsy, c('y')],
+                      MSY=fit.msy[id.fmsy, c('y')])
+      
       ouT[[m]]=list(res=res,MSYs=MSYs)
     }
     return(ouT)
