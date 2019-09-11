@@ -2435,7 +2435,7 @@ fn.input.data=function(SP,Yr.assess,Conv.cal.mn.to.fin.mn,Historic.Ktch,Bin.size
 
 
   #Age and growth 
-  if(SP%in%c("WH","GM"))  write.csv(Age.growth,"Age.growth.csv",row.names=F)
+  if(exists('Age.growth'))  write.csv(Age.growth,"Age.growth.csv",row.names=F)
  
  
   #Recapture information from acoustic tags
