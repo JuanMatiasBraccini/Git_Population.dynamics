@@ -224,11 +224,11 @@ fn.input.data=function(SP,Yr.assess,Conv.cal.mn.to.fin.mn,Historic.Ktch,Bin.size
       #by zone
         #monthly
     Ab.indx.TDGDLF.West=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.monthly.West.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zone1=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.monthly.Zone1.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn1=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.monthly.Zone1.csv",sep=""),stringsAsFactors=F)
     
         #daily
     Ab.indx.TDGDLF.West.daily=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.daily.West.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zone1.daily=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.daily.Zone1.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn1.daily=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.daily.Zone1.csv",sep=""),stringsAsFactors=F)
     
       #zones combined   
         #monthly
@@ -555,26 +555,11 @@ Mesh.prop.eff.Zn2=read.csv("C:/Matias/Analyses/Catch and effort/mesh.proportiona
  
  
 #8.  Standardised Mean size 
-if(SP=="WH")
-{
-  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Whiskery Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
-  #Avr.wt.yr.zn= rbind the zones west, zone1, zone2
-}
-if(SP=="GM")
-{
-  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Gummy Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
-  #Avr.wt.yr.zn=
-}
-if(SP=="TK")
-{
-  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Sandbar Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
-  #Avr.wt.yr.zn=
-}
-if(SP=="BW")
-{
-  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Dusky Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
-  #Avr.wt.yr.zn=
-}
+if(SP=="WH")  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Whiskery Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
+if(SP=="GM")  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Gummy Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
+if(SP=="TK")  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Sandbar Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
+if(SP=="BW")  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Dusky Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
+
  
 
 
@@ -1415,7 +1400,6 @@ if(SP=="BW")
     #monthly
     Ab.indx.TDGDLF.West$zone="West"
     Ab.indx.TDGDLF.Zn1$zone="Zone1"
-    Ab.indx.TDGDLF=Ab.indx.TDGDLF.West
     Ab.indx.TDGDLF=rbind(Ab.indx.TDGDLF.West,Ab.indx.TDGDLF.Zn1)
     
     #daily
@@ -2028,39 +2012,60 @@ if(SP=="BW")
  
 
   #3. Visualize mean weights
-  fn.see.avg.wgt=function()
-  {
-    b=Avr.wt.yr.zn
-    zn=unique(b$zone)
-    N=1:length(unique(b$finyear))
-    SD=b$Mean.wgt*(b$CV)
-    plot(N,ylim=c(0,max(b$Mean.wgt+SD)*1.05),main="",cex.main=1.25,xaxt='n',
-         ylab="",xlab="",pch=19,cex=3,cex.axis=1,col="transparent",xlim=c(0,N[length(N)]+0.5))
-    
-    jit=c(0,.1,.2)
-    CLOS=Zn.col
-    
-    for(x in 1:length(zn))
-    {
-      a=subset(b, zone==zn[x])
-      N1=N+jit[x]
-      SD=a$Mean.wgt*(a$CV)
-      
-      points(N1,a$Mean.wgt,ylim=c(0,max(a$Mean.wgt+SD)*1.05),main=zn[x],cex.main=1.75,xaxt='n',
-             ylab="",pch=19,cex=2,cex.axis=1.25,col=CLOS[x])
-      segments(N1,a$Mean.wgt,N1,a$Mean.wgt-SD,lwd=2,col=CLOS[x])
-      segments(N1,a$Mean.wgt,N1,a$Mean.wgt+SD,lwd=2,col=CLOS[x])
-      axis(1,N,F,tck=-0.015)    
-    }
-    axis(1,seq(1,length(N),2),a$finyear[seq(1,length(N),2)],tck=-0.025,cex.axis=1.25)
-    legend('bottomleft',zn,pch=19,col=CLOS,pt.cex=1.5,cex=1.2,bty='n')
-  }
-  fn.fig("Avg.wgt",2000,2000)
-  par(mfcol=c(1,1),las=1,mai=c(0.45,0.35,.1,.15),oma=c(2.25,2.25,.1,.1),mgp=c(1,.5,0))
-  fn.see.avg.wgt()
-  mtext("Average live weight (kg)",2,line=0,cex=1.5,las=3,outer=T)
-  mtext("Financial Year",1,cex=1.5,line=0.5,outer=T)
-  dev.off()
+ if(exists("Avr.wt.yr.zn"))
+ {
+   fn.see.avg.wgt=function()
+   {
+     b=Avr.wt.yr.zn
+     zn=unique(b$zone)
+     N=1:length(unique(b$finyear))
+     SD=b$Mean.wgt*(b$CV)
+     plot(N,ylim=c(0,max(b$Mean.wgt+SD)*1.05),main="",cex.main=1.25,xaxt='n',
+          ylab="",xlab="",pch=19,cex=3,cex.axis=1,col="transparent",xlim=c(0,N[length(N)]+0.5))
+     
+     jit=c(0,.1,.2)
+     CLOS=Zn.col
+     
+     for(x in 1:length(zn))
+     {
+       a=subset(b, zone==zn[x])
+       N1=N+jit[x]
+       SD=a$Mean.wgt*(a$CV)
+       
+       points(N1,a$Mean.wgt,ylim=c(0,max(a$Mean.wgt+SD)*1.05),main=zn[x],cex.main=1.75,xaxt='n',
+              ylab="",pch=19,cex=2,cex.axis=1.25,col=CLOS[x])
+       segments(N1,a$Mean.wgt,N1,a$Mean.wgt-SD,lwd=2,col=CLOS[x])
+       segments(N1,a$Mean.wgt,N1,a$Mean.wgt+SD,lwd=2,col=CLOS[x])
+       axis(1,N,F,tck=-0.015)    
+     }
+     axis(1,seq(1,length(N),2),a$finyear[seq(1,length(N),2)],tck=-0.025,cex.axis=1.25)
+     legend('bottomleft',zn,pch=19,col=CLOS,pt.cex=1.5,cex=1.2,bty='n')
+   }
+   fn.fig("Avg.wgt.zn",2000,2000)
+   par(mfcol=c(1,1),las=1,mai=c(0.45,0.35,.1,.15),oma=c(2.25,2.25,.1,.1),mgp=c(1,.5,0))
+   fn.see.avg.wgt()
+   mtext("Average live weight (kg)",2,line=0,cex=1.5,las=3,outer=T)
+   mtext("Financial Year",1,cex=1.5,line=0.5,outer=T)
+   dev.off()
+ }
+ fn.see.avg.wgt=function()
+ {
+   a=Avr.wt.yr
+   N=1:length(unique(a$Finyear))
+   SD=a$mean*(a$CV)
+   plot(N,a$mean,ylim=c(0,max(a$mean+SD)*1.05),main="",cex.main=1.25,xaxt='n',
+        ylab="",xlab="",pch=19,cex=2,cex.axis=1,col="steelblue",xlim=c(0,N[length(N)]+0.5))
+   segments(N,a$mean,N,a$mean-SD,lwd=2,col="steelblue")
+   segments(N,a$mean,N,a$mean+SD,lwd=2,col="steelblue")
+   axis(1,seq(1,length(N),1),labels =F)
+   axis(1,seq(1,length(N),2),a$Finyear[seq(1,length(N),2)],tck=-0.02,cex.axis=1)
+ }
+ fn.fig("Avg.wgt",2000,2000)
+ par(mfcol=c(1,1),las=1,mai=c(0.45,0.35,.1,.15),oma=c(2.25,2.25,.1,.1),mgp=c(1,.5,0))
+ fn.see.avg.wgt()
+ mtext("Relative live weight",2,line=0.5,cex=1.5,las=3,outer=T)
+ mtext("Financial Year",1,cex=1.5,line=0.5,outer=T)
+ dev.off()
   
 
   #4. Select effort years
@@ -2112,7 +2117,7 @@ if(SP=="BW")
         
     #4. Years with abundance index
     Abundance.data=vector('list',length(ABUNDANCE))
-    for (f in 1:n.ab) Abundance.data[[f]]=fn.search.yr(unique(as.character(ABUNDANCE$FINYEAR)),f+p+d)
+    for (f in 1:n.ab) Abundance.data[[f]]=fn.search.yr(unique(as.character(ABUNDANCE$Finyear)),f+p+d)
         
     #5. Years with conventional tagging
     ConvTag.data=vector('list',length(C.TAGS))
@@ -2121,8 +2126,11 @@ if(SP=="BW")
     #6. Years with  acoustic tagging
     AcousTag.data=fn.search.yr(as.character(A.TAGS),1+g+f+p+d)
      
+    #average weight
+    Yrs.avrg.w=fn.search.yr(AVG.wt,1+g+f+p+d+1)
+    
     #7. Years iwth effort
-    Yrs.efrt=fn.search.yr(as.character(Eff.total$FINYEAR),1+g+f+p+d+1) 
+    Yrs.efrt=fn.search.yr(as.character(Eff.total$FINYEAR),1+g+f+p+d+2) 
     
     #8. Plot data
     X=1:length(Yrs)
@@ -2138,10 +2146,6 @@ if(SP=="BW")
       if(length(a)>length(X))a=a[1:(length(a)-1)]
       points(X,a,cex=4,pch="-",col=COL[[2]][q])
     }
-    
-    #add average weight
-    #points(X,Yrs.avg.wt$Occur,cex=4,pch="-",col="pink")
-    
     
     #add abundance
     for(q in 1:n.ab)
@@ -2168,7 +2172,9 @@ if(SP=="BW")
     if(add.conv.tag=="YES") points(X,AcousTag.data$Occur[1:length(X)],cex=4,pch="-",col=COL$acoustic.t)
     if(add.conv.tag=="NO") points(X,AcousTag.data$Occur[1:length(X)]-1,cex=4,pch="-",col=COL$acoustic.t)
    
-      
+    #add average weight
+    points(X,Yrs.avrg.w$Occur,cex=4,pch="-",col="pink")
+    
     #add effort
     if(add.effort=="YES")points(X,Yrs.efrt$Occur,cex=4,pch="-",col="orange")
    
@@ -2198,8 +2204,8 @@ if(SP=="BW")
   }    
   if(SP=="TK")
   {
-    if(Ktch.source=="ALL") YLIm=c(0.5,11)
-    if(Ktch.source=="WA.only") YLIm=c(0.5,10)
+    if(Ktch.source=="ALL") YLIm=c(0.5,10)
+    if(Ktch.source=="WA.only") YLIm=c(0.5,9)
   }
     
   if(add.effort=="YES") YLIm[2]=YLIm[2]+1
@@ -2214,7 +2220,7 @@ if(SP=="BW")
     if(add.effort=="NO")
     {
       lAbs=c(paste("Catch (",names(catch),")",sep=""),paste("Size comp. (",names(All.size[1]),")",sep=""),
-             "Stand. cpue (TDGDLF)","Conv. tag.","Acous. tag.")
+             "Stand. cpue (TDGDLF)","Conv. tag.","Acous. tag.","Avrg.w")
     }
   }
   if(add.conv.tag=="NO")
@@ -2227,7 +2233,7 @@ if(SP=="BW")
   PAR()
   #par(mai=c(.7,2.1,.1,.1))
   visualize.dat(CATCH=catch,SIZE=All.size[1],ABUNDANCE=Ab.indx.TDGDLF.all,C.TAGS=c.Tag,
-                A.TAGS=a.Tag,AVG.wt=N.yrs.Avr.wt,YLIM=YLIm,LABS=lAbs)   
+                A.TAGS=a.Tag,AVG.wt=unique(Avr.wt.yr$Finyear),YLIM=YLIm,LABS=lAbs)   
   dev.off()
 
   
@@ -2278,10 +2284,12 @@ if(SP=="BW")
   dev.off()
  
  
-  #6.Export data for use in models     
+  #6.Export data for use in models    
   HandL="C:/Matias/Data/Population dynamics/Data inputs for models/"
-  setwd(paste(HandL,SP.LABELS1,"/",Yr.assess,sep=''))
- 
+  DiR=paste(HandL,SP.LABELS1,"/",Yr.assess,sep='')
+  if(!file.exists(DiR)) dir.create(DiR)
+  setwd(DiR)
+  
   fn.agg.at.level.and.exprt=function(DAT,Level,VAR,SOURCE)
   {
    for(i in 1:length(DAT))
@@ -2408,7 +2416,7 @@ if(SP=="BW")
   
  
   #avg weight
-  write.csv(Avr.wt.yr.zn,"ktch.avg.weight.annual.by.zone.csv",row.names=F) 
+  if(exists('Avr.wt.yr.zn'))write.csv(Avr.wt.yr.zn,"ktch.avg.weight.annual.by.zone.csv",row.names=F) 
   write.csv(Avr.wt.yr,"ktch.avg.weight.annual.csv",row.names=F)
   
   
@@ -2424,11 +2432,7 @@ if(SP=="BW")
   write.csv(Ab.indx.TDGDLF.all,"cpue.annual.TDGDLF.csv",row.names=F)
   write.csv(Ab.indx.TDGDLF.all.daily,"cpue.annual.TDGDLF.daily.csv",row.names=F)
 
-    #km.gn.hours
-  if(exists("Ab.indx.TDGDLF.all.hours"))write.csv(Ab.indx.TDGDLF.all.hours,"cpue.annual.TDGDLF.hours.csv",row.names=F)
-  if(exists("Ab.indx.TDGDLF.all.daily.hours"))write.csv(Ab.indx.TDGDLF.all.daily.hours,"cpue.annual.TDGDLF.daily.hours.csv",row.names=F)
-  
-  
+ 
   #Naturaliste survey     
   if(exists('Naturaliste.abun')) write.csv(Naturaliste.abun,"cpue.annual.survey.csv",row.names=F)
   if(exists('Naturaliste.size')) write.csv(Naturaliste.size,"size.annual.survey.csv",row.names=F)
