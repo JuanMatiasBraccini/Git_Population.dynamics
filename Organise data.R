@@ -156,64 +156,64 @@ fn.input.data=function(SP,Yr.assess,Conv.cal.mn.to.fin.mn,Historic.Ktch,Bin.size
    HNDL="C:/Matias/Analyses/Data_outs/"
   if(SP=="WH")
   {
-    #by zone
+    #by zone (relative)
       #monthly
-   # Ab.indx.TDGDLF.West=read.csv(paste(HNDL,"Whiskery shark.annual.abundance.basecase.monthly.West.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn1=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.monthly.Zone1.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn2=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.monthly.Zone2.csv",sep=""),stringsAsFactors=F)
+   # Ab.indx.TDGDLF.West=read.csv(paste(HNDL,"Whiskery shark.annual.abundance.basecase.monthly.West_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn1=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.monthly.Zone1_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn2=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.monthly.Zone2_relative.csv",sep=""),stringsAsFactors=F)
 
       #daily
-    Ab.indx.TDGDLF.West.daily=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.daily.West.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn1.daily=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.daily.Zone1.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn2.daily=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.daily.Zone2.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.West.daily=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.daily.West_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn1.daily=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.daily.Zone1_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn2.daily=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.daily.Zone2_relative.csv",sep=""),stringsAsFactors=F)
     
     
-    #zones combined   
+    #zones combined  (relative)  
       #monthly
-    Ab.indx.TDGDLF.all=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.monthly.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.all=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.monthly_relative.csv",sep=""),stringsAsFactors=F)
       #daily
-    Ab.indx.TDGDLF.all.daily=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.daily.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.all.daily=read.csv(paste(HNDL,"Whiskery Shark.annual.abundance.basecase.daily_relative.csv",sep=""),stringsAsFactors=F)
 
   }
   
   if(SP=="GM")
   {
-    #by zone
+    #by zone (relative)
       #monthly
-    Ab.indx.TDGDLF.Zn2=read.csv(paste(HNDL,"Gummy Shark.annual.abundance.basecase.monthly.Zone2.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn2=read.csv(paste(HNDL,"Gummy Shark.annual.abundance.basecase.monthly.Zone2_relative.csv",sep=""),stringsAsFactors=F)
       #daily
-    Ab.indx.TDGDLF.Zn2.daily=read.csv(paste(HNDL,"Gummy Shark.annual.abundance.basecase.daily.Zone2.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn2.daily=read.csv(paste(HNDL,"Gummy Shark.annual.abundance.basecase.daily.Zone2_relative.csv",sep=""),stringsAsFactors=F)
     
     
-    #zones combined
+    #zones combined (relative)
       #monthly
-    Ab.indx.TDGDLF.all=read.csv(paste(HNDL,"Gummy Shark.annual.abundance.basecase.monthly.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.all=read.csv(paste(HNDL,"Gummy Shark.annual.abundance.basecase.monthly_relative.csv",sep=""),stringsAsFactors=F)
       #daily
-    Ab.indx.TDGDLF.all.daily=read.csv(paste(HNDL,"Gummy Shark.annual.abundance.basecase.daily.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.all.daily=read.csv(paste(HNDL,"Gummy Shark.annual.abundance.basecase.daily_relative.csv",sep=""),stringsAsFactors=F)
  
   }
   
   if(SP=="BW")
   {
-    #1. TDGDLF standardised CPUE
+    #1. TDGDLF standardised CPUE (relative)
       #by zone
         #monthly
-    Ab.indx.TDGDLF.West=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.monthly.West.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn1=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.monthly.Zone1.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn2=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.monthly.Zone2.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.West=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.monthly.West_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn1=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.monthly.Zone1_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn2=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.monthly.Zone2_relative.csv",sep=""),stringsAsFactors=F)
     
         #daily
-    Ab.indx.TDGDLF.West.daily=read.csv(paste(HNDL,"Dusky shark.annual.abundance.basecase.daily.West.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn1.daily=read.csv(paste(HNDL,"Dusky shark.annual.abundance.basecase.daily.Zone1.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn2.daily=read.csv(paste(HNDL,"Dusky shark.annual.abundance.basecase.daily.Zone2.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.West.daily=read.csv(paste(HNDL,"Dusky shark.annual.abundance.basecase.daily.West_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn1.daily=read.csv(paste(HNDL,"Dusky shark.annual.abundance.basecase.daily.Zone1_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn2.daily=read.csv(paste(HNDL,"Dusky shark.annual.abundance.basecase.daily.Zone2_relative.csv",sep=""),stringsAsFactors=F)
     
       #zones combined   
         #monthly
-    Ab.indx.TDGDLF.all=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.monthly.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.all=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.monthly_relative.csv",sep=""),stringsAsFactors=F)
         #daily
-    Ab.indx.TDGDLF.all.daily=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.daily.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.all.daily=read.csv(paste(HNDL,"Dusky Shark.annual.abundance.basecase.daily_relative.csv",sep=""),stringsAsFactors=F)
     
-    #2. Naturaliste survey
+    #2. Naturaliste survey (relative)
     Ab.index.Srvy.FixSt=read.csv(paste(HNDL,"Dusky.Srvy.FixSt.csv",sep=""),stringsAsFactors=F)
     Size.index.Srvy.FixSt=read.csv(paste(HNDL,"Dusky.Srvy.FixSt_size.csv",sep=""),stringsAsFactors=F)
   }
@@ -221,22 +221,22 @@ fn.input.data=function(SP,Yr.assess,Conv.cal.mn.to.fin.mn,Historic.Ktch,Bin.size
   if(SP=="TK")
   {
     #1. TDGDLF standardised CPUE
-      #by zone
+      #by zone (relative)
         #monthly
-    Ab.indx.TDGDLF.West=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.monthly.West.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn1=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.monthly.Zone1.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.West=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.monthly.West_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn1=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.monthly.Zone1_relative.csv",sep=""),stringsAsFactors=F)
     
         #daily
-    Ab.indx.TDGDLF.West.daily=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.daily.West.csv",sep=""),stringsAsFactors=F)
-    Ab.indx.TDGDLF.Zn1.daily=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.daily.Zone1.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.West.daily=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.daily.West_relative.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.Zn1.daily=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.daily.Zone1_relative.csv",sep=""),stringsAsFactors=F)
     
-      #zones combined   
+      #zones combined  (relative)  
         #monthly
-    Ab.indx.TDGDLF.all=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.monthly.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.all=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.monthly_relative.csv",sep=""),stringsAsFactors=F)
         #daily
-    Ab.indx.TDGDLF.all.daily=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.daily.csv",sep=""),stringsAsFactors=F)
+    Ab.indx.TDGDLF.all.daily=read.csv(paste(HNDL,"Sandbar Shark.annual.abundance.basecase.daily_relative.csv",sep=""),stringsAsFactors=F)
 
-    #2. Naturaliste survey
+    #2. Naturaliste survey (relative)
     Ab.index.Srvy.FixSt=read.csv(paste(HNDL,"Sandbar.Srvy.FixSt.csv",sep=""),stringsAsFactors=F)
     Size.index.Srvy.FixSt=read.csv(paste(HNDL,"Sandbar.Srvy.FixSt_size.csv",sep=""),stringsAsFactors=F)
   }
@@ -555,10 +555,52 @@ Mesh.prop.eff.Zn2=read.csv("C:/Matias/Analyses/Catch and effort/mesh.proportiona
  
  
 #8.  Standardised Mean size 
-if(SP=="WH")  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Whiskery Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
-if(SP=="GM")  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Gummy Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
-if(SP=="TK")  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Sandbar Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
-if(SP=="BW")  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Dusky Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
+if(SP=="WH")
+{
+  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Whiskery Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
+  
+  Avr.wt.yr_west=read.csv("C:/Matias/Analyses/Data_outs/Whiskery Shark.annual.mean.size_relative_west.csv",stringsAsFactors=F)
+  Avr.wt.yr_zn1=read.csv("C:/Matias/Analyses/Data_outs/Whiskery Shark.annual.mean.size_relative_zone1.csv",stringsAsFactors=F)
+  Avr.wt.yr_zn2=read.csv("C:/Matias/Analyses/Data_outs/Whiskery Shark.annual.mean.size_relative_zone2.csv",stringsAsFactors=F)
+  Avr.wt.yr_west$zone="West"
+  Avr.wt.yr_zn1$zone="Zone1"
+  Avr.wt.yr_zn2$zone="Zone2"
+  Avr.wt.yr.zn=rbind(Avr.wt.yr_west,Avr.wt.yr_zn1,Avr.wt.yr_zn2)
+}
+if(SP=="GM") 
+{
+  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Gummy Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
+  
+  Avr.wt.yr_zn2=read.csv("C:/Matias/Analyses/Data_outs/Gummy Shark.annual.mean.size_relative_zone2.csv",stringsAsFactors=F)
+  Avr.wt.yr_zn2$zone="Zone2"
+  Avr.wt.yr.zn=Avr.wt.yr_zn2
+  
+  
+}
+if(SP=="TK") 
+{
+  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Sandbar Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
+  
+  Avr.wt.yr_west=read.csv("C:/Matias/Analyses/Data_outs/Sandbar Shark.annual.mean.size_relative_west.csv",stringsAsFactors=F)
+  Avr.wt.yr_zn1=read.csv("C:/Matias/Analyses/Data_outs/Sandbar Shark.annual.mean.size_relative_zone1.csv",stringsAsFactors=F)
+  Avr.wt.yr_west$zone="West"
+  Avr.wt.yr_zn1$zone="Zone1"
+  Avr.wt.yr.zn=rbind(Avr.wt.yr_west,Avr.wt.yr_zn1)
+  
+}
+if(SP=="BW")
+{
+  Avr.wt.yr=read.csv("C:/Matias/Analyses/Data_outs/Dusky Shark.annual.mean.size_relative.csv",stringsAsFactors=F)
+  
+  Avr.wt.yr_west=read.csv("C:/Matias/Analyses/Data_outs/Dusky Shark.annual.mean.size_relative_west.csv",stringsAsFactors=F)
+  Avr.wt.yr_zn1=read.csv("C:/Matias/Analyses/Data_outs/Dusky Shark.annual.mean.size_relative_zone1.csv",stringsAsFactors=F)
+  Avr.wt.yr_zn2=read.csv("C:/Matias/Analyses/Data_outs/Dusky Shark.annual.mean.size_relative_zone2.csv",stringsAsFactors=F)
+  Avr.wt.yr_west$zone="West"
+  Avr.wt.yr_zn1$zone="Zone1"
+  Avr.wt.yr_zn2$zone="Zone2"
+  Avr.wt.yr.zn=rbind(Avr.wt.yr_west,Avr.wt.yr_zn1,Avr.wt.yr_zn2)
+  
+}
 
  
 
