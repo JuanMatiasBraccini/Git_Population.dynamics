@@ -2060,7 +2060,7 @@ if(SP=="BW")
    {
      b=Avr.wt.yr.zn
      zn=unique(b$zone)
-     N=1:length(unique(b$finyear))
+     N=1:length(unique(b$Finyear))
      SD=b$mean*(b$CV)
      plot(N,ylim=c(0,max(b$mean+SD)*1.05),main="",cex.main=1.25,xaxt='n',
           ylab="",xlab="",pch=19,cex=3,cex.axis=1,col="transparent",xlim=c(0,N[length(N)]+0.5))
@@ -2080,9 +2080,10 @@ if(SP=="BW")
        segments(N1,a$mean,N1,a$mean+SD,lwd=2,col=CLOS[x])
        axis(1,N,F,tck=-0.015)    
      }
-     axis(1,seq(1,length(N),2),a$finyear[seq(1,length(N),2)],tck=-0.025,cex.axis=1.25)
+     axis(1,seq(1,length(N),2),a$Finyear[seq(1,length(N),2)],tck=-0.025,cex.axis=1.25)
      legend('bottomleft',zn,pch=19,col=CLOS,pt.cex=1.5,cex=1.2,bty='n')
    }
+   
    fn.fig("Avg.wgt.zn",2000,2000)
    par(mfcol=c(1,1),las=1,mai=c(0.45,0.35,.1,.15),oma=c(2.25,2.25,.1,.1),mgp=c(1,.5,0))
    fn.see.avg.wgt()
