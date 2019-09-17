@@ -1545,7 +1545,7 @@ if(SP=="BW")
   
  
   #set working directory for outputing data
-   HandL="C:/Matias/Analyses/Population dynamics/"
+   HandL="C:/Matias/Analyses/Population dynamics/1."
    DiR=paste(HandL,SP.LABELS,"/",Yr.assess,"/1_Inputs/Visualise data",sep='')
    if(!file.exists(DiR))
    {
