@@ -2087,7 +2087,7 @@ if(SP=="BW")
    fn.fig("Avg.wgt.zn",2000,2000)
    par(mfcol=c(1,1),las=1,mai=c(0.45,0.35,.1,.15),oma=c(2.25,2.25,.1,.1),mgp=c(1,.5,0))
    fn.see.avg.wgt()
-   mtext("Average live weight (kg)",2,line=0,cex=1.5,las=3,outer=T)
+   mtext("Relative live weight",2,line=0,cex=1.5,las=3,outer=T)
    mtext("Financial Year",1,cex=1.5,line=0.5,outer=T)
    dev.off()
  }
@@ -2237,18 +2237,18 @@ if(SP=="BW")
 
   if(SP%in%c("WH","GM"))
   {
-    if(add.conv.tag=="YES")  YLIm=c(0.5,7)
-    if(add.conv.tag=="NO")  YLIm=c(0.5,6)
+    if(add.conv.tag=="YES")  YLIm=c(0.5,8)
+    if(add.conv.tag=="NO")  YLIm=c(0.5,7)
   }
   if(SP=="BW")
   {
-    if(Ktch.source=="ALL") YLIm=c(0.5,13)
-    if(Ktch.source=="WA.only") YLIm=c(0.5,10)
+    if(Ktch.source=="ALL") YLIm=c(0.5,14)
+    if(Ktch.source=="WA.only") YLIm=c(0.5,11)
   }    
   if(SP=="TK")
   {
-    if(Ktch.source=="ALL") YLIm=c(0.5,10)
-    if(Ktch.source=="WA.only") YLIm=c(0.5,9)
+    if(Ktch.source=="ALL") YLIm=c(0.5,11)
+    if(Ktch.source=="WA.only") YLIm=c(0.5,10)
   }
     
   if(add.effort=="YES") YLIm[2]=YLIm[2]+1
@@ -2275,8 +2275,8 @@ if(SP=="BW")
   fn.fig("avail.dat",2400,1400)
   PAR()
   #par(mai=c(.7,2.1,.1,.1))
-  visualize.dat(CATCH=catch,SIZE=All.size[1],ABUNDANCE=Ab.indx.TDGDLF.all,C.TAGS=c.Tag,
-                A.TAGS=a.Tag,AVG.wt=unique(Avr.wt.yr$Finyear),YLIM=YLIm,LABS=lAbs)   
+  visualize.dat(CATCH=catch,SIZE=All.size[1],ABUNDANCE=rbind(Ab.indx.TDGDLF.all,Ab.indx.TDGDLF.all.daily),
+                C.TAGS=c.Tag,A.TAGS=a.Tag,AVG.wt=unique(Avr.wt.yr$Finyear),YLIM=YLIm,LABS=lAbs)   
   dev.off()
 
   
