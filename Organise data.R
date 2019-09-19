@@ -127,16 +127,9 @@ fn.input.data=function(SP,Yr.assess,Conv.cal.mn.to.fin.mn,Historic.Ktch,Bin.size
   # unknown species composition. This could be resolved if videos reviewed...
     
   #1.8 Rec fishing
-  Rec.fish.catch.2011.12=read.csv("Catch and Effort/Recreational/I.Survey.2011_12.csv",stringsAsFactors=F) #Ryan et al 2013 
-  Rec.fish.catch.2013.14=read.csv("Catch and Effort/Recreational/I.Survey.2013_14.csv",stringsAsFactors=F) #Ryan et al 2015 
-  Rec.fish.catch.2015.16=read.csv("Catch and Effort/Recreational/I.Survey.2015_16.csv",stringsAsFactors=F) #Ryan et al 2015 
-  Rec.fish.catch=rbind(Rec.fish.catch.2011.12,Rec.fish.catch.2013.14,Rec.fish.catch.2015.16)
-  Rec.fish.catch=Rec.fish.catch%>%mutate(Bioregion=ifelse(Bioregion=="Gasconye","Gascoyne",Bioregion),
-                                         FINYEAR=FinYear)
+  source("C:/Matias/Analyses/Population dynamics/Git_Stock.assessments/Recreational.catch.recons.R")
   
-  #WA population for rec catch recons
-  WA.population=read.csv("C:/Matias/Data/AusBureauStatistics.csv",stringsAsFactors=F)
-  
+ 
   #1.9 TEPs   
     #1.9.1 TDGDLF
   #description: from Comments in TDGDLF returns
@@ -927,73 +920,13 @@ if(SP=="BW")
   
   
   #1.7 Recreational catch                        
-  Rec.sp=c("Bronze Whaler","Gummy Sharks", "Sandbar Shark","Whaler Sharks","Whiskery Shark")
-  PCM.rec=0.25   #arbitrary post capture mortality of released sharks
-  AVG.wt=5     #assumed individual average weight of 
-  
-  Rec.fish.catch=subset(Rec.fish.catch,Common.Name%in%Rec.sp)
-  
-  #assume all whaler sharks are bronze and consider bronze as dusky
-  Rec.fish.catch$Common.Name=with(Rec.fish.catch,ifelse(Common.Name=="Whaler Sharks",
-                                  "Bronze Whaler",Common.Name))
   if(SP=='WH') SPEC='Whiskery Shark'
   if(SP=='GM') SPEC='Gummy Sharks'
-  if(SP=='BW') SPEC='Bronze Whaler'
+  if(SP=='BW') SPEC='Dusky Whaler'
   if(SP=='TK') SPEC='Sandbar Shark'
-  
-  Rec.fish.catch=subset(Rec.fish.catch,Common.Name==SPEC) 
-  
-  fn.rec=function(DAT)
-  {
-    DAT$LIVEWT.c=round(DAT$Kept.Number+DAT$Rel.Number*PCM.rec)*AVG.wt
-    if(KTCH.UNITS=="TONNES") DAT$LIVEWT.c=DAT$LIVEWT.c/1000   #catch weight in tonnes
-    AGG=aggregate(LIVEWT.c~FINYEAR+Common.Name+Bioregion,DAT,sum) 
-    LisT=vector('list',length(unique(AGG$Common.Name)))
-    names(LisT)=unique(AGG$Common.Name)
-    for(i in 1:length(LisT))
-    {
-      LisT[[i]]=subset(AGG,Common.Name==names(LisT)[i],select=c(LIVEWT.c,FINYEAR,Bioregion))
-    }
-    return(LisT)
-  }
-  Rec.ktch=fn.rec(Rec.fish.catch)  
-  
-  #Construct rec fishing series   
-  #note: construct series backfilling linearly using rate of WA population increase corrected by 
-  #       participation rate and the 2011-12 estimate
-  Part.rate.89=26.6  #Ryan et al 2012
-  Part.rate.00=28.5
-  Part.rate=lm(c(Part.rate.89,Part.rate.00)~c(1989,2000))
-  Part.rate.pred=coef(Part.rate)[1]+coef(Part.rate)[2]*WA.population$Year
-  Part.rate.pred=(Part.rate.pred/100)*WA.population$Population
-  Part.rate.pred=Part.rate.pred/Part.rate.pred[match(2011,WA.population$Year)]
-  Part.rate.pred=data.frame(P.rate=Part.rate.pred[1:(length(Part.rate.pred)-1)],
-          FinYear=paste(WA.population$Year[1:(length(WA.population$Year)-1)],"-",
-          substr(WA.population$Year[2:length(WA.population$Year)],start=3,stop=4),sep=""))
-  
-  back.fill=function(dat)
-  {
-    id=match(unique(dat$FinYear),Part.rate.pred$FinYear)
-    Regns=unique(dat$Bioregion)
-    Dummy=vector('list',length(Regns))
-    for (d in 1:length(Dummy))
-    {
-      a=subset(dat,Bioregion==Regns[d])
-      Mat=matrix(NA,nrow=length(Part.rate.pred$FinYear),ncol=2)
-      Mat[,2]=mean(a$LIVEWT.c)*Part.rate.pred$P.rate
-      Mat=as.data.frame(Mat)
-      names(Mat)=c("FINYEAR","LIVEWT.c")
-      Mat$FINYEAR=Part.rate.pred$FinYear
-      Mat$zone=Regns[d]
-      Dummy[[d]]=Mat
-    }
-    Dummy=do.call(rbind,Dummy)
-    return(Dummy)
-  }
-  
-  for(i in 1:length(Rec.ktch)) Rec.ktch[[i]]=back.fill(Rec.ktch[[i]])
-  rec.ktch=Rec.ktch[[1]]
-  
+  Rec.ktch=subset(Rec.ktch,Common.Name==SPEC)
+  if(SP=='GM') Rec.ktch=subset(Rec.ktch,zone%in%c("South Coast","West Coast"))
+
   #split month
   fn.rec.month=function(dat,dat1)
   {
