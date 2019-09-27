@@ -11,7 +11,7 @@ fn.frmt=function(x) format(x,digits=3)
 library(future.apply)
 plan(multiprocess)   #for parallel processing
 
-Catch_MSY=function(ct,yr,r.prior,user,k.max,startbio,finalbio,res,n,sigR,ct.future,yr.future)
+Catch_MSY=function(ct,yr,r.prior,user,k.lower,k.upper,startbio,finalbio,res,n,sigR,ct.future,yr.future)
 {
   set.seed(999)  ## for same random sequence
   
@@ -35,7 +35,7 @@ Catch_MSY=function(ct,yr,r.prior,user,k.max,startbio,finalbio,res,n,sigR,ct.futu
   }
   
   #-range of possible K values
-  start_k=c(max(ct),k.max*max(ct))
+  start_k=c(k.lower*max(ct),k.upper*max(ct))
   
   #- boundaries of initial and final depletion ranges if not user-defined (as fraction of k) 
   if(is.na(startbio[1]))
@@ -79,7 +79,7 @@ Catch_MSY=function(ct,yr,r.prior,user,k.max,startbio,finalbio,res,n,sigR,ct.futu
             ell = 1
         }	
       }
-      return(list(ell=ell,bt=bt,bt.rel=bt/k,KTCH=ct))
+      return(list(ell=ell,bt=bt,KTCH=ct))
     })
   }
   
@@ -117,8 +117,8 @@ Catch_MSY=function(ct,yr,r.prior,user,k.max,startbio,finalbio,res,n,sigR,ct.futu
            get.bt=function(i) M[[i]]$bt
            bt = sapply(i, get.bt) 
            
-           get.bt.rel=function(i) M[[i]]$bt.rel
-           bt.rel = sapply(i, get.bt.rel) 
+           #get.bt.rel=function(i) M[[i]]$bt.rel
+           #bt.rel = sapply(i, get.bt.rel) 
            
            
            get.ct=function(i) M[[i]]$KTCH
@@ -126,7 +126,7 @@ Catch_MSY=function(ct,yr,r.prior,user,k.max,startbio,finalbio,res,n,sigR,ct.futu
            
            U=KTCH/bt[1:nrow(KTCH),]
            
-           return(list(r=ri,k=ki, ell=ell,bt=bt,bt.rel=bt.rel,U=U))	
+           return(list(r=ri,k=ki, ell=ell,bt=bt,U=U))	
          })
   }
   
@@ -186,7 +186,7 @@ Catch_MSY=function(ct,yr,r.prior,user,k.max,startbio,finalbio,res,n,sigR,ct.futu
     msy = r * k / 4
     mean_ln_msy = mean(log(msy))
     bt=R1$bt[,R1$ell==1]
-    bt.rel=R1$bt.rel[,R1$ell==1]
+    #bt.rel=R1$bt.rel[,R1$ell==1]
     
     U=R1$U[,R1$ell==1]
     U.neg <- apply(U, 2, function(col) any(col < 0)) 
@@ -210,7 +210,7 @@ Catch_MSY=function(ct,yr,r.prior,user,k.max,startbio,finalbio,res,n,sigR,ct.futu
     polygon(c(all.yrs,rev(all.yrs)),  c(rep(Mean.MSY_LOW,length(all.yrs)),rep(Mean.MSY_UP,length(all.yrs))),
             col=rgb(.1,.1,.1,alpha=.2),border="transparent") 
     abline(h=Mean.MSY,col="orange", lwd=2.5)
-    legend("bottom",c("MSY (±1.96 SE)"),bty='n',col=c("orange"),lty=1,lwd=2.5,cex=1.5)
+    legend("bottom",c("MSY (?1.96 SE)"),bty='n',col=c("orange"),lty=1,lwd=2.5,cex=1.5)
     dev.off()
     
     #Multiplot
@@ -266,19 +266,18 @@ Catch_MSY=function(ct,yr,r.prior,user,k.max,startbio,finalbio,res,n,sigR,ct.futu
             bt[i]=(bt[i-1]+r*bt[i-1]*(1-bt[i-1]/k)-ct.future[i-1])*exp(xt) ## calculate biomass as function of previous year's biomass plus net production minus catch
         }
         
-        return(list(bt=bt,bt.rel=bt/k))
+        return(list(bt=bt))
       })
     }
     Projections = apply(theta.sel,1,schaefer.future)   
     bt.future=matrix(nrow=length(Projections[[1]]$bt),ncol=nrow(theta.sel)) 
-    bt.rel.future=bt.future
+    #bt.rel.future=bt.future
     for(qq in 1:nrow(theta.sel))
     {
       bt.future[,qq]=Projections[[qq]]$bt
-      bt.rel.future[,qq]=Projections[[qq]]$bt.rel
+     # bt.rel.future[,qq]=Projections[[qq]]$bt.rel
     }
-    return(list(r=r,k=k,msy=msy,bt=bt[1:nyr,],bt.rel=bt.rel[1:nyr,],Fish.mort=Fish.mort,
-                bt.future=bt.future,bt.rel.future=bt.rel.future,
+    return(list(r=r,k=k,msy=msy,bt=bt[1:nyr,],Fish.mort=Fish.mort,bt.future=bt.future,
                 "Possible combinations r-k"=length(r),
                 "geom. mean r"=fn.frmt(exp(mean(log(r)))),  
                 "r +/- 1.96 SD"=paste(fn.frmt(exp(mean(log(r))-1.96*sd(log(r)))),"-",fn.frmt(exp(mean(log(r))+1.96*sd(log(r))))),
