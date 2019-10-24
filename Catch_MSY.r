@@ -277,6 +277,34 @@ Catch_MSY=function(ct,yr,r.prior,user,k.lower,k.upper,startbio,finalbio,res,n,si
       bt.future[,qq]=Projections[[qq]]$bt
      # bt.rel.future[,qq]=Projections[[qq]]$bt.rel
     }
+    
+    #Remove runs outside specified intial and final depletion ranges
+    if(!is.na(startbio[1]))
+    {
+      a=round(bt[1,]/k,1)
+      id=which(a<startbio[1])
+      if(length(id)>0)
+      {
+        r=r[-id]
+        k=k[-id]
+        msy=msy[-id]
+        bt=bt[,-id]
+        Fish.mort=Fish.mort[,-id]
+        if(is.matrix(bt.future))bt.future=bt.future[,-id]
+      }
+    }
+    a=round(bt[nrow(bt),]/k,1)
+    id=which(a<finalbio[1] | a> finalbio[2])
+    if(length(id)>0)
+    {
+      r=r[-id]
+      k=k[-id]
+      msy=msy[-id]
+      bt=bt[,-id]
+      Fish.mort=Fish.mort[,-id]
+      if(is.matrix(bt.future))bt.future=bt.future[,-id]
+    }
+    
     return(list(r=r,k=k,msy=msy,bt=bt[1:nyr,],Fish.mort=Fish.mort,bt.future=bt.future,
                 "Possible combinations r-k"=length(r),
                 "geom. mean r"=fn.frmt(exp(mean(log(r)))),  
