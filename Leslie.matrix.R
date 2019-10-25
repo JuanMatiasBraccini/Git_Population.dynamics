@@ -9,18 +9,19 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
     #Max Age
     if(length(A)==1) Max.A=A
     if(length(A)>1)if(A[1]==A[2]) Max.A=A[1]
-    if(length(A)>1)if(A[1]<A[2]) Max.A=ceiling(rtriangle(1,a=A[1],b=A[2],c=round((A[1]+A[2])/2)))
+    if(length(A)>1)if(A[1]<A[2]) Max.A=ceiling(rtriangle(1,a=A[1],b=A[2],c=ceiling((A[1]+A[2])/2)))
     
     #Age vector
     age=first.age:Max.A
     
     #fecundity at age
     if(Rangefec[1]==Rangefec[2]) Meanfec.sim=rep(Rangefec[1],length(age))
-    if(Rangefec[1]<Rangefec[2]) Meanfec.sim=rep(ceiling(rtriangle(1,a=Rangefec[1],b=Rangefec[2],c=round((Rangefec[1]+Rangefec[2])/2))),length(age)) 
+    if(Rangefec[1]<Rangefec[2]) Meanfec.sim=rep(ceiling(rtriangle(1,a=Rangefec[1],b=Rangefec[2],
+                                                            c=ceiling((Rangefec[1]+Rangefec[2])/2))),length(age)) 
     
     #Age at 50% maturity
-    if(RangeMat[1]==RangeMat[2]) age.mat.sim=round(RangeMat[1])
-    if(RangeMat[1]<RangeMat[2]) age.mat.sim=round(runif(1,RangeMat[1],RangeMat[2]))  
+    if(RangeMat[1]==RangeMat[2]) age.mat.sim=ceiling(RangeMat[1])
+    if(RangeMat[1]<RangeMat[2]) age.mat.sim=ceiling(runif(1,RangeMat[1],RangeMat[2]))  
     
     #Reproductive cycle
     if(length(Reprod_cycle)==1) Rep_cycle.sim=Reprod_cycle else
@@ -34,25 +35,28 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
   
   M.fun=function(Amax,age.mat)
   {
-    m.Jensen.1=1.5*k
-    m.Jensen.1=rep(m.Jensen.1,length(age))
-    
     m.Jensen.2=1.65/age.mat
     m.Jensen.2=rep(m.Jensen.2,length(age))
     
     #Pauly (1980)  
-    m.Pauly=10^(-0.0066-0.279*log10(Linf)+0.6543*log10(k)+0.4634*log10(Aver.T))
-    m.Pauly=rep(m.Pauly,length(age))
+    #m.Pauly=10^(-0.0066-0.279*log10(Linf)+0.6543*log10(k)+0.4634*log10(Aver.T))
+    #m.Pauly=rep(m.Pauly,length(age))
     
     #Hoenig (1983), combined teleost and cetaceans    
     m.Hoenig=exp(1.44-0.982*log(Amax))      
     m.Hoenig=rep(m.Hoenig,length(age))
     
+    #Then et al (2015)
+    m.Then.1=4.899*Amax^(-0.916)
+    m.Then.1=rep(m.Then.1,length(age))
+    
+    
     #STEP 2. get mean at age
-    if(Hoenig.only=="NO")nat.mort=data.frame(m.Jensen.2,m.Pauly,m.Hoenig)  
+    if(Hoenig.only=="NO")nat.mort=data.frame(m.Jensen.2,m.Hoenig,m.Then.1)  
     if(Hoenig.only=="YES")nat.mort=data.frame(m.Hoenig)
     
     return(rowMeans(nat.mort))
+    apply(nat.mort, 1, function(x) weighted.mean(x, c(1,1,1.5,1.5)))
   }
   
   Leslie=function(M,age.mat,Meanfec,CyclE)

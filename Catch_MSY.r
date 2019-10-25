@@ -281,8 +281,8 @@ Catch_MSY=function(ct,yr,r.prior,user,k.lower,k.upper,startbio,finalbio,res,n,si
     #Remove runs outside specified intial and final depletion ranges
     if(!is.na(startbio[1]))
     {
-      a=round(bt[1,]/k,1)
-      id=which(a<startbio[1])
+      a=round(bt[1,]/k,2)
+      id=which(a<startbio[1]*.9)
       if(length(id)>0)
       {
         r=r[-id]
@@ -293,7 +293,7 @@ Catch_MSY=function(ct,yr,r.prior,user,k.lower,k.upper,startbio,finalbio,res,n,si
         if(is.matrix(bt.future))bt.future=bt.future[,-id]
       }
     }
-    a=round(bt[nrow(bt),]/k,1)
+    a=bt[nrow(bt),]/k
     id=which(a<finalbio[1] | a> finalbio[2])
     if(length(id)>0)
     {
