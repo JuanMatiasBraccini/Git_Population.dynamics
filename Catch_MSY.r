@@ -143,7 +143,7 @@ Catch_MSY=function(ct,yr,r.prior,user,k.lower,k.upper,startbio,finalbio,res,n,si
       "Assumed intermediate biomass (B/k) in", interyr, " =", interbio[1],"-",interbio[2]," k",";  ",
       "Assumed final biomass (B/k) =", parbound$lambda[1],"-",parbound$lambda[2]," k",";  ",
       "Initial bounds for k (tons)=", parbound$k[1], "-", parbound$k[2],"\n")
-  if(user=="Yes") cat("r prior (logmean and logSD) =", parbound$r,"\n")	
+  if(user=="Yes") cat("r prior (shape and rate) =", parbound$r,"\n")	
   if(!user=="Yes") cat("Initial bounds for r =", parbound$r[1], "-", parbound$r[2],"\n")  
   
   
@@ -184,7 +184,6 @@ Catch_MSY=function(ct,yr,r.prior,user,k.lower,k.upper,startbio,finalbio,res,n,si
     r = R1$r[R1$ell==1]
     k = R1$k[R1$ell==1]
     msy = r * k / 4
-    mean_ln_msy = mean(log(msy))
     bt=R1$bt[,R1$ell==1]
     #bt.rel=R1$bt.rel[,R1$ell==1]
     
@@ -196,61 +195,7 @@ Catch_MSY=function(ct,yr,r.prior,user,k.lower,k.upper,startbio,finalbio,res,n,si
     Fish.mort=apply(U, 2, function(x) -log(1-x)) 
     Mean.MSY=exp(mean(log(msy)))  #geometric mean
     
-    
-    ## Plot statistics
-    Mean.MSY_UP=exp(mean_ln_msy + 1.96 * sd(log(msy)))  
-    Mean.MSY_LOW=exp(mean_ln_msy - 1.96 * sd(log(msy)))
-    
-    #Catch and MSY
-    fn.fig("CatchMSY_Plots",2000,2400) 
-    par(mai=c(1,1.1,.1,.1),las=1,mgp=c(3,.5,0))
-    plot(yr, ct, type="l", ylim = c(0, max(ct)), xlab = "Financial year", ylab = "Total catch (tonnes)", main = "",lwd=2,
-         cex.lab=2,cex.axis=1.5)
-    all.yrs=c(yr[1]-2,yr,yr[length(yr)]+2)
-    polygon(c(all.yrs,rev(all.yrs)),  c(rep(Mean.MSY_LOW,length(all.yrs)),rep(Mean.MSY_UP,length(all.yrs))),
-            col=rgb(.1,.1,.1,alpha=.2),border="transparent") 
-    abline(h=Mean.MSY,col="orange", lwd=2.5)
-    legend("bottom",c("MSY (?1.96 SE)"),bty='n',col=c("orange"),lty=1,lwd=2.5,cex=1.5)
-    dev.off()
-    
-    #Multiplot
-    fn.fig("CatchMSY_Multi",2400,2400) 
-    par(mfcol=c(2,3),mar=c(4,4,1,1),cex.lab=1.5,mgp=c(2.25,.7,0))    
-    plot(yr, ct, type="l", ylim = c(0, max(ct)), xlab = "Financial year", ylab = "Total catch (tonnes)",lwd=2)
-    abline(h=Mean.MSY,col="black", lwd=2)
-    abline(h=Mean.MSY_LOW,col="red")
-    abline(h=Mean.MSY_UP,col="red")
-    
-    hist(r, freq=F, xlim=c(0, 1.2 * max(r)), main = "",col="grey70")
-    abline(v=exp(mean(log(r))),col="black",lwd=2)
-    abline(v=exp(mean(log(r))-1.96*sd(log(r))),col="red")
-    abline(v=exp(mean(log(r))+1.96*sd(log(r))),col="red")
-    box()
-    
-    plot(r1, k1, xlab="r", ylab="k (tonnes)")
-    
-    hist(k, freq=F, xlim=c(0, 1.2 * max(k)), xlab="k (tonnes)", main = "",col="grey70")
-    abline(v=exp(mean(log(k))),col="black", lwd=2)	
-    abline(v=exp(mean(log(k))-1.96*sd(log(k))),col="red")
-    abline(v=exp(mean(log(k))+1.96*sd(log(k))),col="red")
-    box()
-    
-    plot(log(r), log(k),xlab="ln(r)",ylab="ln(k)")
-    abline(v=mean(log(r)))
-    abline(h=mean(log(k)))
-    abline(mean(log(msy))+log(4),-1, col="black",lwd=2)
-    abline(mean(log(msy))-1.96*sd(log(msy))+log(4),-1, col="red")
-    abline(mean(log(msy))+1.96*sd(log(msy))+log(4),-1, col="red")
-    
-    hist(msy, freq=F, xlim=c(0, 1.2 * max(msy)), xlab="MSY (tonnes)",main = "",col="grey70")
-    abline(v=exp(mean(log(msy))),col="black", lwd=2)
-    abline(v=exp(mean_ln_msy - 1.96 * sd(log(msy))),col="red")
-    abline(v=exp(mean_ln_msy + 1.96 * sd(log(msy))),col="red")
-    box()
-    
-    dev.off()
-    
-    
+
     #Forward projections, starting at current year  
     nyr.future  <- length(yr.future)    ## number of years in the time series
     ## assign selected r and k combinations
@@ -287,6 +232,8 @@ Catch_MSY=function(ct,yr,r.prior,user,k.lower,k.upper,startbio,finalbio,res,n,si
       {
         r=r[-id]
         k=k[-id]
+        r1=r1[-id]
+        k1=k1[-id]
         msy=msy[-id]
         bt=bt[,-id]
         Fish.mort=Fish.mort[,-id]
@@ -299,11 +246,69 @@ Catch_MSY=function(ct,yr,r.prior,user,k.lower,k.upper,startbio,finalbio,res,n,si
     {
       r=r[-id]
       k=k[-id]
+      r1=r1[-id]
+      k1=k1[-id]
       msy=msy[-id]
       bt=bt[,-id]
       Fish.mort=Fish.mort[,-id]
       if(is.matrix(bt.future))bt.future=bt.future[,-id]
     }
+    
+    
+    ## Plot statistics
+    mean_ln_msy = mean(log(msy))
+    Mean.MSY_UP=exp(mean_ln_msy + 1.96 * sd(log(msy)))  
+    Mean.MSY_LOW=exp(mean_ln_msy - 1.96 * sd(log(msy)))
+    
+    #Catch and MSY
+    fn.fig("CatchMSY_Plots",2000,2400) 
+    par(mai=c(1,1.1,.1,.1),las=1,mgp=c(3,.5,0))
+    plot(yr, ct, type="l", ylim = c(0, max(ct)), xlab = "Financial year", ylab = "Total catch (tonnes)", main = "",lwd=2,
+         cex.lab=2,cex.axis=1.5)
+    all.yrs=c(yr[1]-2,yr,yr[length(yr)]+2)
+    polygon(c(all.yrs,rev(all.yrs)),  c(rep(Mean.MSY_LOW,length(all.yrs)),rep(Mean.MSY_UP,length(all.yrs))),
+            col=rgb(.1,.1,.1,alpha=.2),border="transparent") 
+    abline(h=Mean.MSY,col="orange", lwd=2.5)
+    legend("bottom",c("MSY (?1.96 SE)"),bty='n',col=c("orange"),lty=1,lwd=2.5,cex=1.5)
+    dev.off()
+    
+    #Multiplot
+    fn.fig("CatchMSY_Multi",2400,2400) 
+    par(mfcol=c(2,3),mar=c(4,4,1,1),cex.lab=1.5,mgp=c(2.25,.7,0))    
+    plot(yr, ct, type="l", ylim = c(0, max(ct)), xlab = "Financial year", ylab = "Total catch (tonnes)",lwd=2)
+    abline(h=Mean.MSY,col="black", lwd=2)
+    abline(h=Mean.MSY_LOW,col="red")
+    abline(h=Mean.MSY_UP,col="red")
+    
+    hist(r, freq=F, xlim=c(0, 1.2 * max(r)), main = "",col="grey70")
+    abline(v=exp(mean(log(r))),col="black",lwd=2)
+    abline(v=exp(mean(log(r))-1.96*sd(log(r))),col="red")
+    abline(v=exp(mean(log(r))+1.96*sd(log(r))),col="red")
+    box()
+    
+    plot(r1, k1, xlab="r", ylab="k (tonnes)",main=paste(n,"tested trials &", length(r),"retained trials")) 
+    
+    hist(k, freq=F, xlim=c(0, 1.2 * max(k)), xlab="k (tonnes)", main = "",col="grey70")
+    abline(v=exp(mean(log(k))),col="black", lwd=2)	
+    abline(v=exp(mean(log(k))-1.96*sd(log(k))),col="red")
+    abline(v=exp(mean(log(k))+1.96*sd(log(k))),col="red")
+    box()
+    
+    plot(log(r), log(k),xlab="ln(r)",ylab="ln(k)")
+    abline(v=mean(log(r)))
+    abline(h=mean(log(k)))
+    abline(mean(log(msy))+log(4),-1, col="black",lwd=2)
+    abline(mean(log(msy))-1.96*sd(log(msy))+log(4),-1, col="red")
+    abline(mean(log(msy))+1.96*sd(log(msy))+log(4),-1, col="red")
+    
+    hist(msy, freq=F, xlim=c(0, 1.2 * max(msy)), xlab="MSY (tonnes)",main = "",col="grey70")
+    abline(v=exp(mean(log(msy))),col="black", lwd=2)
+    abline(v=exp(mean_ln_msy - 1.96 * sd(log(msy))),col="red")
+    abline(v=exp(mean_ln_msy + 1.96 * sd(log(msy))),col="red")
+    box()
+    
+    dev.off()
+    
     
     return(list(r=r,k=k,msy=msy,bt=bt[1:nyr,],Fish.mort=Fish.mort,bt.future=bt.future,
                 "Possible combinations r-k"=length(r),
