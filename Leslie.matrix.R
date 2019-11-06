@@ -56,7 +56,7 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
     if(Hoenig.only=="YES")nat.mort=data.frame(m.Hoenig)
     
     return(rowMeans(nat.mort))
-    apply(nat.mort, 1, function(x) weighted.mean(x, c(1,1,1.5,1.5)))
+    apply(nat.mort, 1, function(x) weighted.mean(x, c(1,1.5,1.5)))
   }
   
   Leslie=function(M,age.mat,Meanfec,CyclE)
@@ -97,7 +97,7 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
     r=log(LAMBDA)  
     t2=log(2)/r 
     
-    return(list(r=r,t2=t2,lambda=LAMBDA))  
+    return(list(r=r,t2=t2,lambda=LAMBDA,M=M))  
   }
   
   Store=vector('list',length(N.sims))
@@ -131,5 +131,6 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
   }
   
   r.prior=do.call("c", lapply(Store, "[[", 1))
-  return(r.prior)
+  M.all=do.call("list", lapply(Store, "[[", 4))
+  return(list(r.prior=r.prior,M=M.all))
 }
