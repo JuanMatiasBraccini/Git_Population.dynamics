@@ -2,7 +2,7 @@ library(popbio)     #for solving matrices
 library(EnvStats)
 if("package:VGAM" %in% search()) detach("package:VGAM", unload=TRUE)
 library(triangle)
-fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,Reprod_cycle,Hoenig.only)
+fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,Reprod_cycle,bwt,awt,Lo)
 {
   fn.draw.samples=function()
   {
@@ -32,31 +32,59 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
     
     return(list(Max.A=Max.A,age.mat=age.mat.sim,Meanfec=Meanfec.sim,Rep_cycle=Rep_cycle.sim))    
   }
-  
+
   M.fun=function(Amax,age.mat)
   {
+    #STEP 1. calculate M from different methods (see Kenchington 2013)
+    
+      #1.1. Age-independent
+        #Jensen (1996)
     m.Jensen.2=1.65/age.mat
     m.Jensen.2=rep(m.Jensen.2,length(age))
     
-    #Pauly (1980)  
-    #m.Pauly=10^(-0.0066-0.279*log10(Linf)+0.6543*log10(k)+0.4634*log10(Aver.T))
-    #m.Pauly=rep(m.Pauly,length(age))
+        #Pauly (1980)  
+    m.Pauly=10^(-0.0066-0.279*log10(Linf)+0.6543*log10(k)+0.4634*log10(Aver.T))
+    m.Pauly=rep(m.Pauly,length(age))
     
-    #Hoenig (1983), combined teleost and cetaceans    
+        #Hoenig (1983), combined teleost and cetaceans    
     m.Hoenig=exp(1.44-0.982*log(Amax))      
     m.Hoenig=rep(m.Hoenig,length(age))
     
-    #Then et al (2015)
+        #Then et al (2015)
     m.Then.1=4.899*Amax^(-0.916)
     m.Then.1=rep(m.Then.1,length(age))
     
+      #1.2. Age-dependent
+        #Peterson and Wroblewski 1984 (dry weight in grams, length in cm)
+    Dry.w=0.2   # Cortes (2002)
+    TL=Lo+(Linf-Lo)*(1-exp(-k*age))
+    wet.weight=1000*awt*TL^bwt
+    m.PetWro=1.92*(wet.weight*Dry.w)^-0.25
+    m.PetWro[m.PetWro>1]=NA
+    
+        #Lorenzen 1996 (weight in grams)
+    m.Lorenzen=3*wet.weight^-0.288
+    m.Lorenzen[m.Lorenzen>1]=NA
+    
+        #Gislason et al (2010) (weight in grams, length in cm)
+    m.Gislason=1.73*(TL^-1.61)*(Linf^1.44)*k
+    m.Gislason[m.Gislason>1]=NA
+    
     
     #STEP 2. get mean at age
-    if(Hoenig.only=="NO")nat.mort=data.frame(m.Jensen.2,m.Hoenig,m.Then.1)  
-    if(Hoenig.only=="YES")nat.mort=data.frame(m.Hoenig)
+    nat.mort=data.frame(m.Jensen.2,m.Pauly,m.Hoenig,m.Then.1,
+                        m.PetWro,m.Lorenzen,m.Gislason)  
+    #for dogfish, due to their small size, weight-based M estimators highly overestimate M
+    if(mean(m.PetWro/m.Gislason,na.rm=T)>5)  nat.mort=data.frame(m.Jensen.2,m.Pauly,m.Hoenig,m.Then.1,
+                                                                   m.Gislason)  
     
-    return(rowMeans(nat.mort))
-    apply(nat.mort, 1, function(x) weighted.mean(x, c(1,1.5,1.5)))
+    #STEP 3. Calculate mean
+    MoRt=rowMeans(nat.mort,na.rm=T)
+    #MoRt=apply(nat.mort, 1, function(x) weighted.mean(x, c(1,1,1.5,1.5,1,1,1)))
+    
+    if(MoRt[1]<MoRt[2]) MoRt[1]=1.2*MoRt[2]  #for analysed species, M[1] is 1.2 times M[2] on average
+    
+    return(MoRt)
   }
   
   Leslie=function(M,age.mat,Meanfec,CyclE)
