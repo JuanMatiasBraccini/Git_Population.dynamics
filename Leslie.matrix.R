@@ -2,8 +2,13 @@ library(popbio)     #for solving matrices
 library(EnvStats)
 if("package:VGAM" %in% search()) detach("package:VGAM", unload=TRUE)
 library(triangle)
-fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,Reprod_cycle,bwt,awt,Lo)
+library(MASS)   #for sampling from multivariate distribution
+
+source("C:/Matias/Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/Natural.mortality.R")
+
+fun.Leslie=function(N.sims,k,Linf,k.sd,Linf.sd,A,first.age,RangeMat,Rangefec,sexratio,Reprod_cycle,bwt,awt,Lo)
 {
+  #univariate distributions
   fn.draw.samples=function()
   {
     #Max Age
@@ -32,61 +37,15 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
     
     return(list(Max.A=Max.A,age.mat=age.mat.sim,Meanfec=Meanfec.sim,Rep_cycle=Rep_cycle.sim))    
   }
-
-  M.fun=function(Amax,age.mat)
+  
+  #multivariate distributions
+  fun.multivar=function(mu,stddev,corMat,N)
   {
-    #STEP 1. calculate M from different methods (see Kenchington 2013)
-    
-      #1.1. Age-independent
-        #Jensen (1996)
-    m.Jensen.2=1.65/age.mat
-    m.Jensen.2=rep(m.Jensen.2,length(age))
-    
-        #Pauly (1980)  
-    m.Pauly=10^(-0.0066-0.279*log10(Linf)+0.6543*log10(k)+0.4634*log10(Aver.T))
-    m.Pauly=rep(m.Pauly,length(age))
-    
-        #Hoenig (1983), combined teleost and cetaceans    
-    m.Hoenig=exp(1.44-0.982*log(Amax))      
-    m.Hoenig=rep(m.Hoenig,length(age))
-    
-        #Then et al (2015)
-    m.Then.1=4.899*Amax^(-0.916)
-    m.Then.1=rep(m.Then.1,length(age))
-    
-      #1.2. Age-dependent
-        #Peterson and Wroblewski 1984 (dry weight in grams, length in cm)
-    Dry.w=0.2   # Cortes (2002)
-    TL=Lo+(Linf-Lo)*(1-exp(-k*age))
-    wet.weight=1000*awt*TL^bwt
-    m.PetWro=1.92*(wet.weight*Dry.w)^-0.25
-    m.PetWro[m.PetWro>1]=NA
-    
-        #Lorenzen 1996 (weight in grams)
-    m.Lorenzen=3*wet.weight^-0.288
-    m.Lorenzen[m.Lorenzen>1]=NA
-    
-        #Gislason et al (2010) (weight in grams, length in cm)
-    m.Gislason=1.73*(TL^-1.61)*(Linf^1.44)*k
-    m.Gislason[m.Gislason>1]=NA
-    
-    
-    #STEP 2. get mean at age
-    nat.mort=data.frame(m.Jensen.2,m.Pauly,m.Hoenig,m.Then.1,
-                        m.PetWro,m.Lorenzen,m.Gislason)  
-    #for dogfish, due to their small size, weight-based M estimators highly overestimate M
-    if(mean(m.PetWro/m.Gislason,na.rm=T)>5)  nat.mort=data.frame(m.Jensen.2,m.Pauly,m.Hoenig,m.Then.1,
-                                                                   m.Gislason)  
-    
-    #STEP 3. Calculate mean
-    MoRt=rowMeans(nat.mort,na.rm=T)
-    #MoRt=apply(nat.mort, 1, function(x) weighted.mean(x, c(1,1,1.5,1.5,1,1,1)))
-    
-    if(MoRt[1]<MoRt[2]) MoRt[1]=1.2*MoRt[2]  #for analysed species, M[1] is 1.2 times M[2] on average
-    
-    return(MoRt)
+    covMat <- stddev %*% t(stddev) * corMat
+    return(mvrnorm(n = N, mu = mu, Sigma = covMat, empirical = TRUE))
   }
   
+  #Leslie
   Leslie=function(M,age.mat,Meanfec,CyclE)
   {  
     #survivorship
@@ -99,6 +58,7 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
     
     #reproductive schedules   
     MF=c(rep(0,(age.mat-1)),Meanfec[age.mat:length(Meanfec)])
+    MF[age.mat]=MF[age.mat]*.5   #because age.mat is actually 50% maturity
     mx=MF*sexratio/CyclE
     
     #probability of surviving (for birth-pulse, post-breeding census)
@@ -128,6 +88,11 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
     return(list(r=r,t2=t2,lambda=LAMBDA,M=M))  
   }
   
+  #Monte Carlo simulations
+  Growth.sim=fun.multivar(mu <- c(Linf,k),
+                          stddev <- c(Linf.sd,k.sd),
+                          corMat <- matrix(c(1, k.Linf.cor,k.Linf.cor, 1),ncol = 2),
+                          N=N.sims)
   Store=vector('list',length(N.sims))
   for(i in 1:N.sims)
   {
@@ -137,11 +102,13 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
     Age.mat.sim=a$age.mat
     Meanfec.sim=a$Meanfec
     Reprod_cycle.sim=a$Rep_cycle
-    M.sim=M.fun(Amax=A.sim,age.mat=Age.mat.sim)
+    Linf.sim=Growth.sim[i,1]
+    k.sim=Growth.sim[i,2]
+    M.sim=M.fun(AGE=age,Amax=A.sim,age.mat=Age.mat.sim,LinF=Linf.sim,kk=k.sim,awt=awt,bwt=bwt,Lo=Lo)
     Store[[i]]=Leslie(M=M.sim,age.mat=Age.mat.sim,Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim)
     rr=Store[[i]]$r
     
-    #avoid negative r
+      #avoid negative r
     if(rr<=0)repeat 
     {
       a=fn.draw.samples()
@@ -150,7 +117,7 @@ fun.Leslie=function(N.sims,k,Linf,Aver.T,A,first.age,RangeMat,Rangefec,sexratio,
       Age.mat.sim=a$age.mat
       Meanfec.sim=a$Meanfec
       Reprod_cycle.sim=a$Rep_cycle
-      M.sim=M.fun(Amax=A.sim,age.mat=Age.mat.sim)
+      M.sim=M.fun(AGE=age,Amax=A.sim,age.mat=Age.mat.sim,LinF=Linf.sim,kk=k.sim,awt=awt,bwt=bwt,Lo=Lo)
       Store[[i]]=Leslie(M=M.sim,age.mat=Age.mat.sim,Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim)
       rr=Store[[i]]$r
       if(rr>0)break
