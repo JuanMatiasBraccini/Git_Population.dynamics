@@ -1,3 +1,17 @@
+#Notes:
+#   see Kendal et al 2019 for common issues with Leslie Matrices
+#   Leslie matrices project the population from one nominal census date to the next.
+#   Census occurs just before breeding (“prebreeding census”) e.g. Cortes 2002
+#              or just after breeding (“postbreeding census”) e.g. Aires da Silva 2007
+#   birth-pulse populations= short breeding season (i.e. the season in which individuals
+#                                 are born or hatched)
+#   Age starts counting from birth, so that a reproductively
+#       mature individual breeds on or about their birthday: e.g., if the age at
+#       first reproduction is 5 years, then an individual has its first offspring on
+#       its fifth birthday
+
+
+
 library(popbio)     #for solving matrices
 library(EnvStats)
 if("package:VGAM" %in% search()) detach("package:VGAM", unload=TRUE)
@@ -6,7 +20,7 @@ library(MASS)   #for sampling from multivariate distribution
 
 source("C:/Matias/Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/Natural.mortality.R")
 
-fun.Leslie=function(N.sims,k,Linf,k.sd,Linf.sd,A,first.age,RangeMat,Rangefec,sexratio,Reprod_cycle,bwt,awt,Lo)
+fun.Leslie=function(N.sims,k,Linf,k.sd,Linf.sd,k.Linf.cor,A,first.age,RangeMat,Rangefec,sexratio,Reprod_cycle,bwt,awt,Lo)
 {
   #univariate distributions
   fn.draw.samples=function()
