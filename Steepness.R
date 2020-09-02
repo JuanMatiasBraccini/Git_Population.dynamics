@@ -1,12 +1,12 @@
 source("C:/Matias/Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/Natural.mortality.R")
 
 fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,MAT,
-                       FecunditY,Cycle,sexratio,spawn.time,AWT,BWT,LO)
+                       FecunditY,Cycle,sexratio,spawn.time,AWT,BWT,LO,Resamp)
 {
   Fecu=unlist(FecunditY)
   
   #samples from univariate distribution
-  fn.draw.samples=function(A=Amax,RangeMat=MAT,Rangefec=Fecu,Reprod_cycle=Breed.cycle)
+  fn.draw.samples=function(A=Amax,RangeMat=MAT,Rangefec=Fecu,Reprod_cycle=Cycle)
   {
     #Max Age
     if(length(A)==1) Max.A=A
@@ -114,27 +114,32 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
               Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim,
               Sel)
     #avoid non-sense h
-    if(hh<0.20)repeat 
+    if(Resamp=="YES")
     {
-      a=fn.draw.samples()
-      A.sim=a$Max.A
-      age=first.age:A.sim
-      Age.mat.sim=a$age.mat
-      Meanfec.sim=a$Meanfec
-      Reprod_cycle.sim=a$Rep_cycle
-      M.sim=M.fun(AGE=age,Amax=A.sim,age.mat=Age.mat.sim,LinF=Linf.sim,kk=k.sim,awt=AWT,bwt=BWT,Lo=LO)
-      Sel=sel.age
-      if(length(Sel)<length(age))
+      if(hh<0.20)repeat 
       {
-        Sel=c(Sel,rep(Sel[length(Sel)],length(age)-length(Sel)))
-      }
-      hh=Stipns(max.age=A.sim,M=M.sim,age.mat=Age.mat.sim,
-                Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim,
-                Sel)
-      if(hh>0.2)break
+        a=fn.draw.samples()
+        A.sim=a$Max.A
+        age=first.age:A.sim
+        Age.mat.sim=a$age.mat
+        Meanfec.sim=a$Meanfec
+        Reprod_cycle.sim=a$Rep_cycle
+        M.sim=M.fun(AGE=age,Amax=A.sim,age.mat=Age.mat.sim,LinF=Linf.sim,kk=k.sim,awt=AWT,bwt=BWT,Lo=LO)
+        Sel=sel.age
+        if(length(Sel)<length(age))
+        {
+          Sel=c(Sel,rep(Sel[length(Sel)],length(age)-length(Sel)))
+        }
+        hh=Stipns(max.age=A.sim,M=M.sim,age.mat=Age.mat.sim,
+                  Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim,
+                  Sel)
+        if(hh>0.2)break
+      } 
     }
+
     Store[i]=hh
   }
+  if(!Resamp=="YES") Store=Store[Store>=0.2]
   
   #get mean and sd from lognormal distribution
   normal.pars=suppressWarnings(fitdistr(Store, "normal"))
