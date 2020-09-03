@@ -11,19 +11,31 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     #Max Age
     if(length(A)==1) Max.A=A
     if(length(A)>1)if(A[1]==A[2]) Max.A=A[1]
-    if(length(A)>1)if(A[1]<A[2]) Max.A=ceiling(rtriangle(1,a=A[1],b=A[2],c=ceiling((A[1]+A[2])/2)))
-    
+    if(length(A)>1)if(A[1]<A[2]) Max.A=floor(rtriangle(1,a=A[1],b=A[2],c=A[1]))
+
     #Age vector
     age=first.age:Max.A
     
-    #fecundity at age
-    if(Rangefec[1]==Rangefec[2]) Meanfec.sim=rep(Rangefec[1],length(age))
-    if(Rangefec[1]<Rangefec[2]) Meanfec.sim=rep(ceiling(rtriangle(1,a=Rangefec[1],b=Rangefec[2],
-                                                                  c=ceiling((Rangefec[1]+Rangefec[2])/2))),length(age)) 
     
     #Age at 50% maturity
-    if(RangeMat[1]==RangeMat[2]) age.mat.sim=ceiling(RangeMat[1])
-    if(RangeMat[1]<RangeMat[2]) age.mat.sim=ceiling(runif(1,RangeMat[1],RangeMat[2]))  
+    if(RangeMat[1]==RangeMat[2]) age.mat.sim=floor(RangeMat[1])
+    if(RangeMat[1]<RangeMat[2]) age.mat.sim=floor(runif(1,RangeMat[1],RangeMat[2])) 
+    
+    #fecundity at age
+      #single value
+    if(Rangefec[1]==Rangefec[2]) Meanfec.sim=rep(Rangefec[1],length(age))
+      #triangular distribution
+    if(!linear.fec=="YES")
+    {
+      if(Rangefec[1]<Rangefec[2]) Meanfec.sim=rep(ceiling(rtriangle(1,a=Rangefec[1],b=Rangefec[2],
+                                                                    c=ceiling((Rangefec[1]+Rangefec[2])/2))),length(age))
+    }
+      #linear increase
+    if(linear.fec=="YES")
+    {
+      Meanfec.sim=c(rep(0,age.mat.sim),
+                    ceiling(seq(Rangefec[1],Rangefec[2],length.out=1+Max.A-age.mat.sim)))
+    }
     
     #Reproductive cycle
     if(length(Reprod_cycle)==1) Rep_cycle.sim=Reprod_cycle else
@@ -52,9 +64,11 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     fecundity=Meanfec*sexratio/CyclE
     
     #maturity
-    maturity=ifelse(age>=age.mat,1,0)   #knife edge
+      #knife edge
+    maturity=ifelse(age>=age.mat,1,0)   
     maturity[which(age==age.mat)]=0.5   #age.mat is actually 50% maturity
-    #maturity=plogis(age,age.mat,1)      #ogive
+      #ogive
+    #maturity=plogis(age,age.mat,1)      
     
     # maximum age is plus group
     phi.o=0.0
@@ -93,6 +107,7 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
                           corMat <- matrix(c(1, k.Linf.cor,k.Linf.cor, 1),ncol = 2),
                           N=Nsims)
   Store=rep(NA,Nsims)
+  M.all=vector('list',Nsims)
   for(i in 1:Nsims)
   {
     a=fn.draw.samples()
@@ -138,6 +153,7 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     }
 
     Store[i]=hh
+    M.all[[i]]=M.sim
   }
   if(!Resamp=="YES") Store=Store[Store>=0.2]
   
@@ -149,5 +165,6 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
   
   return(list(shape=shape,rate=rate,
               mean=normal.pars$estimate[1],
-              sd=normal.pars$estimate[2]))
+              sd=normal.pars$estimate[2],
+              M=M.all))
 }
