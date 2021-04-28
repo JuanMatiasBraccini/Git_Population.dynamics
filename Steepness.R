@@ -1,4 +1,6 @@
-source("C:/Matias/Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/Natural.mortality.R")
+if(!exists('handl_OneDrive')) source('C:/Users/myb/OneDrive - Department of Primary Industries and Regional Development/Matias/Analyses/SOURCE_SCRIPTS/Git_other/handl_OneDrive.R')
+
+source(handl_OneDrive("Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/Natural.mortality.R"))
 
 fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,MAT,
                        FecunditY,Cycle,sexratio,spawn.time,AWT,BWT,LO,Resamp)

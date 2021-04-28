@@ -1,8 +1,9 @@
 
 library(MASS)
+if(!exists('handl_OneDrive')) source('C:/Users/myb/OneDrive - Department of Primary Industries and Regional Development/Matias/Analyses/SOURCE_SCRIPTS/Git_other/handl_OneDrive.R')
 
 #Prior for r (biomass dynamics) using Leslie matrix
-source.hnld="C:/Matias/Analyses/SOURCE_SCRIPTS/Population dynamics/"
+source.hnld=handl_OneDrive("Analyses/SOURCE_SCRIPTS/Population dynamics/")
 fn.source=function(script)source(paste(source.hnld,script,sep=""))
 fn.source("Leslie.matrix.R")    
 fn.source("fn.fig.R")
@@ -87,7 +88,7 @@ r.prior.dist=fun.rprior.dist(Nsims=10000,K=Growth.F$k,LINF=Growth.F$FL_inf,Temp=
 for(sc in 1:length(ktch_msy_scen)) if(!is.na(ktch_msy_scen[[sc]]$r.prior)) ktch_msy_scen[[sc]]$r.prior=unlist(r.prior.dist)
 
 #Run catch_msy function                   
-setPath(hndl=paste("C:/Matias/Analyses/Population dynamics/",Spec," shark/",sep=''))
+setPath(hndl=paste(handl_OneDrive("Analyses/Population dynamics/"),Spec," shark/",sep=''))
 
 if(!file.exists(file.path(getwd(), "/Catch_MSY"))) dir.create(file.path(getwd(), "/Catch_MSY"))   
 setwd(file.path(getwd(), "/Catch_MSY"))

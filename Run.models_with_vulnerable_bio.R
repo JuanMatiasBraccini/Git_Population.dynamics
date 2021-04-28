@@ -10,7 +10,9 @@
 
 
 #source Handy function for plotting
-source.hnld="C:/Matias/Analyses/SOURCE_SCRIPTS/Population dynamics/"
+if(!exists('handl_OneDrive')) source('C:/Users/myb/OneDrive - Department of Primary Industries and Regional Development/Matias/Analyses/SOURCE_SCRIPTS/Git_other/handl_OneDrive.R')
+
+source.hnld=handl_OneDrive("Analyses/SOURCE_SCRIPTS/Population dynamics/")
 fn.source=function(script)source(paste(source.hnld,script,sep=""))
 fn.source("fn.fig.R")
 library(expm)
@@ -360,7 +362,7 @@ if(First.run=="YES")
   
   # ................. Section B: BRING IN PARAMETERS ......................
   
-  hndl=paste("C:/Matias/Analyses/Population dynamics/",Spec," shark/",sep='')
+  hndl=paste(handl_OneDrive("Analyses/Population dynamics/"),Spec," shark/",sep='')
   
     #B.1 Source all input parameters
   fn.source("Organise input parameters.R")
@@ -475,7 +477,7 @@ if(First.run=="YES")
   #Steeepnes
   Steepness=ParS$STEEP
   
-  Hndl="C:/Matias/Data/Population dynamics/Parameter inputs for models/"
+  Hndl=handl_OneDrive("Data/Population dynamics/Parameter inputs for models/")
   Mortality.from.Ref.Point=read.csv(paste(Hndl,Sp2,".M_at_age.csv",sep=""))
   
   
@@ -1479,7 +1481,7 @@ if(First.run=="YES")
     
     #Create .dat file
     n=Movement.rate.data
-    setwd(paste("C:/Matias/Analyses/Movement rate estimation/Joint.estim_ind.base.mod/",Spec,sep=""))
+    setwd(paste(handl_OneDrive("Analyses/Movement rate estimation/Joint.estim_ind.base.mod/"),Spec,sep=""))
     FILE="model.dat"
     Hdr="#Model inputs"
     write(Hdr,file = FILE)
@@ -1504,7 +1506,7 @@ if(First.run=="YES")
   }
   
       #data for displaying inputs
-  hndl.mov.rte="C:/Matias/Analyses/Movement rate estimation/Joint.estim_ind.base.mod/Show Gummy and whiskery outputs/"
+  hndl.mov.rte=handl_OneDrive("Analyses/Movement rate estimation/Joint.estim_ind.base.mod/Show Gummy and whiskery outputs/")
   write.csv(Conv.tg.rec.exp,paste(hndl.mov.rte,"Conv.",Spec,".csv",sep=""),row.names=F)
   write.csv(Acous.tg.rec,paste(hndl.mov.rte,"Acous.",Spec,".csv",sep=""),row.names=F)
   setwd(a)
@@ -2337,7 +2339,7 @@ if(First.run=="YES")
 
   # Create all .tpl files
   fn.source("Copy_and_paste_files.R")
-  where.tpls.are="C:/Matias/Analyses/SOURCE_SCRIPTS/Git_Repository_of_tpl"
+  where.tpls.are=handl_OneDrive("Analyses/SOURCE_SCRIPTS/Git_Repository_of_tpl")
   FIND.NM=list.files(where.tpls.are)
   for(i in 1:nrow(Scenarios))
   {
@@ -2423,7 +2425,7 @@ library(R2admb)
 library(beepr)
 fn.source("reptoRlist.R")
 fn.source("ADMB_read.fit.R")
-source("C:/Matias/Analyses/SOURCE_SCRIPTS/send.emails.R")
+source(handl_OneDrive("Analyses/SOURCE_SCRIPTS/send.emails.R"))
 
 #1. Run model scenarios
 if(!First.run=="YES") Scenarios=Tabla.scen[match(ID.base.Model,Tabla.scen$Model),]   
@@ -2770,7 +2772,7 @@ if(First.run=="YES")
 
 # ................. Section E: DISPLAY MODEL OUTPUTS ......................
 fn.source("Pearson.Residuals.R")
-source("C:/Matias/Analyses/SOURCE_SCRIPTS/Smart_par.R")
+source(handl_OneDrive("Analyses/SOURCE_SCRIPTS/Smart_par.R"))
 library(plotrix)
 library(gridExtra)
 library(grid)
@@ -2829,7 +2831,7 @@ fn.comp.ob.pred=function(what,what1,where.leg)
   }else lines(Yrs,PRED[1:length(Yrs)],col=CL,lwd=3)
   if(what%in%c("CPUE_out","CPUE_eff"))
   {
-    if(!is.na(match("CPUE_SD_out",names(MOD))))legend(where.leg,c("observed (± CV)","predicted"),bty='n',pch=c(19,NA),cex=2,lty=c(NA,1),col=c("black",CL),lwd=3)else
+    if(!is.na(match("CPUE_SD_out",names(MOD))))legend(where.leg,c("observed (? CV)","predicted"),bty='n',pch=c(19,NA),cex=2,lty=c(NA,1),col=c("black",CL),lwd=3)else
       legend(where.leg,c("observed","predicted"),bty='n',pch=c(19,NA),cex=2,lty=c(NA,1),col=c("black",CL),lwd=3)
   } else
   {
@@ -3030,7 +3032,7 @@ fn.comp.ob.pred.spatial=function(what,what1,where.leg,Plot.dims)
   }
   if(Plot.dims=="YES")
   {
-    legend(where.leg,c("observed (± CV)","predicted"),bty='n',pch=c(21,NA),cex=1.75,lty=c(NA,1),
+    legend(where.leg,c("observed (? CV)","predicted"),bty='n',pch=c(21,NA),cex=1.75,lty=c(NA,1),
            col=c("grey40","black"),pt.bg=c("grey80",""),lwd=3)
     axis(1,seq(Yrs[1],Yrs[length(Yrs)],5),seq(Yrs[1],Yrs[length(Yrs)],5),tck=-0.04,cex.axis=1.5)
   }
@@ -3214,7 +3216,7 @@ fn.see.Biom=function(X,what,deplet,Spatial)
     with(OBS,segments(X,value-1.96*std.dev,X,value+1.96*std.dev,col=CL))
     if(!is.na(deplet))
     {
-      DPL=paste(round(Dpltn$value,2),round(1.96*Dpltn$std.dev,2),sep=" ±")
+      DPL=paste(round(Dpltn$value,2),round(1.96*Dpltn$std.dev,2),sep=" ?")
       arrows(X[Now]*.995,OBS$value[Now]*.75,X[Now],OBS$value[Now],length=0.1)
       text(X[Now]*.995,OBS$value[Now]*.75,paste("Depletion=",DPL),pos=1,cex=1.5)
     }
@@ -3233,7 +3235,7 @@ fn.see.Biom=function(X,what,deplet,Spatial)
       with(DD,segments(X,value-1.96*std.dev,X,value+1.96*std.dev,col=CL))
       if(!is.na(deplet))
       {
-        DPL=with(Dpltn[z,],paste(round(value,2),round(1.96*std.dev,2),sep=" ±"))
+        DPL=with(Dpltn[z,],paste(round(value,2),round(1.96*std.dev,2),sep=" ?"))
         arrows(X[Now]*.995,DD$value[Now]*.75,X[Now],DD$value[Now],length=0.1)
         text(X[Now]*.995,DD$value[Now]*.75,paste("Depletion=",DPL),pos=1,cex=1.5)
       }
@@ -3532,7 +3534,7 @@ fn.model.outputs=function(SCENARIO)
       {
         fn.lay.single(c(.8,1,.25,.05))
         comp.fn.comp.ob.pred(what="CPUE_out",what1="Est_CPUE_out",LW=LW)    
-        legend('topright',c("observed (± CV)","predicted"),bty='n',pch=c(21,NA),cex=1.5,lty=c(NA,1),
+        legend('topright',c("observed (? CV)","predicted"),bty='n',pch=c(21,NA),cex=1.5,lty=c(NA,1),
                pt.bg=c("grey80",NA),col=c("grey40","black"),lwd=2)
       }
       if(Spatial.Str=="Three zones")
@@ -3551,7 +3553,7 @@ fn.model.outputs=function(SCENARIO)
     {
       fn.lay.single(c(.8,.8,.5,.05))
       comp.fn.comp.ob.pred(what="CPUE_out",what1="Est_CPUE_out",LW=LW)    
-      if(!is.na(id))legend('topright',c("observed (± CV)","predicted"),bty='n',pch=c(21,NA),cex=1.25,lty=c(NA,1),
+      if(!is.na(id))legend('topright',c("observed (? CV)","predicted"),bty='n',pch=c(21,NA),cex=1.25,lty=c(NA,1),
              pt.bg=c("grey80",NA),col=c("grey40","black"),lwd=2)else
                legend('topright',c("observed","predicted"),bty='n',pch=c(21,NA),cex=1.25,lty=c(NA,1),
                       pt.bg=c("grey80",NA),col=c("grey40","black"),lwd=2)
@@ -4387,7 +4389,7 @@ fn.par.table=function(Scens,Rshp)
   CoefsS=do.call(rbind,CoefsS)
   if(Rshp=="YES")
   {
-    Par.tbl$MLE_SD=with(Par.tbl,paste(MLE,SD,sep=" ±"))
+    Par.tbl$MLE_SD=with(Par.tbl,paste(MLE,SD,sep=" ?"))
     wide <- reshape(subset(Par.tbl,select=c(Scenario,Parameter,MLE_SD)), 
                     v.names = "MLE_SD", idvar = "Scenario",timevar = "Parameter", direction = "wide")
     wide[is.na(wide)]="N/A"

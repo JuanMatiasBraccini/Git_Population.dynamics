@@ -18,7 +18,9 @@ if("package:VGAM" %in% search()) detach("package:VGAM", unload=TRUE)
 library(triangle)
 library(MASS)   #for sampling from multivariate distribution
 
-source("C:/Matias/Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/Natural.mortality.R")
+if(!exists('handl_OneDrive')) source('C:/Users/myb/OneDrive - Department of Primary Industries and Regional Development/Matias/Analyses/SOURCE_SCRIPTS/Git_other/handl_OneDrive.R')
+
+source(handl_OneDrive"Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/Natural.mortality.R"))
 
 fun.Leslie=function(N.sims,k,Linf,k.sd,Linf.sd,k.Linf.cor,A,first.age,RangeMat,Rangefec,
                     sexratio,Reprod_cycle,bwt,awt,Lo,Resamp)

@@ -1,5 +1,7 @@
-source("C:/Matias/Analyses/SOURCE_SCRIPTS/Smart_par.R")
-source("C:/Matias/Analyses/SOURCE_SCRIPTS/Population dynamics/fn.fig.R")
+if(!exists('handl_OneDrive')) source('C:/Users/myb/OneDrive - Department of Primary Industries and Regional Development/Matias/Analyses/SOURCE_SCRIPTS/Git_other/handl_OneDrive.R')
+
+source(handl_OneDrive("Analyses/SOURCE_SCRIPTS/Smart_par.R"))
+source(handl_OneDrive("Analyses/SOURCE_SCRIPTS/Population dynamics/fn.fig.R"))
 Do.jpeg="YES"
 Do.tiff="NO"
 fun.cons.like.mat=function(TAB,CX,Species)
