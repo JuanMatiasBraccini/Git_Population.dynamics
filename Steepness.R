@@ -100,7 +100,7 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     #optimal depletionlevel (i.e.depletion at MER, the proportional reduction from unexploited level)
     Dep.MER=((alpha^0.5)-1)/(alpha-1) 
     
-    return(steepness=h)  
+    return(list(steepness=h,alpha=alpha))  
   }
   
   #Monte Carlo simulations
@@ -109,6 +109,7 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
                           corMat <- matrix(c(1, k.Linf.cor,k.Linf.cor, 1),ncol = 2),
                           N=Nsims)
   Store=rep(NA,Nsims)
+  Store.alfa=Store
   M.all=vector('list',Nsims)
   for(i in 1:Nsims)
   {
@@ -129,7 +130,11 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     }
     hh=Stipns(max.age=A.sim,M=M.sim,age.mat=Age.mat.sim,
               Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim,
-              Sel)
+              Sel)$steepness
+    Alfa=Stipns(max.age=A.sim,M=M.sim,age.mat=Age.mat.sim,
+              Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim,
+              Sel)$alpha
+    
     #avoid non-sense h
     if(Resamp=="YES")
     {
@@ -149,12 +154,16 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
         }
         hh=Stipns(max.age=A.sim,M=M.sim,age.mat=Age.mat.sim,
                   Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim,
-                  Sel)
+                  Sel)$steepness
+        Alfa=Stipns(max.age=A.sim,M=M.sim,age.mat=Age.mat.sim,
+                    Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim,
+                    Sel)$alpha
         if(hh>0.2)break
       } 
     }
 
     Store[i]=hh
+    Store.alfa[i]=Alfa
     M.all[[i]]=M.sim
   }
   if(!Resamp=="YES") Store=Store[Store>=0.2]
@@ -168,5 +177,56 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
   return(list(shape=shape,rate=rate,
               mean=normal.pars$estimate[1],
               sd=normal.pars$estimate[2],
-              M=M.all))
+              M=M.all,
+              Alpha=Store.alfa))
+}
+
+Alpha.Brooks=function(max.age,M,age.mat,Meanfec,CyclE,sexratio=0.5,spawn.time=0)
+{  
+  age=0:max.age
+  
+  #survivorship
+  M=M[1:length(age)]
+  surv=exp(-M)
+  
+  #fecundity  
+  fecundity=rep(Meanfec*sexratio/CyclE,length(age))
+  
+  #maturity
+  #knife edge
+  maturity=ifelse(age>=age.mat,1,0)   
+  maturity[which(age==age.mat)]=0.5   #age.mat is actually 50% maturity
+  #ogive
+  #maturity=plogis(age,age.mat,1)      
+  
+  # maximum age is plus group
+  phi.o=0.0
+  cum.survive=1.0
+  z=0.0
+  for (i in 2:(max.age)  )
+  {
+    z=M[i] 
+    z.ts=M[i]*spawn.time
+    phi.o=phi.o+cum.survive*fecundity[i]*maturity[i]*exp(-z.ts)
+    cum.survive=cum.survive*exp(-z )
+  }
+  #plus group  
+  z= M[max.age+1] 
+  z.ts=M[max.age+1]*spawn.time
+  phi.o=phi.o + fecundity[max.age+1]*maturity[max.age+1]*cum.survive*exp(-z.ts)/( 1- exp(-z ) )
+  
+  #maximum lifetime reproductive rate at low density
+  alpha=phi.o*surv[1]
+  
+  return(alpha)  
+}
+
+
+Cortes.Brooks.2018=function(alpha)  #source: Cortes & Brooks 2018
+{
+  if(alpha<=2.67)           Fmsy.to.M.scaler=0.2
+  if(alpha>2.67 & alpha<=6) Fmsy.to.M.scaler=0.5
+  if(alpha>6)               Fmsy.to.M.scaler=0.8
+  
+  return(Fmsy.to.M.scaler)
 }
