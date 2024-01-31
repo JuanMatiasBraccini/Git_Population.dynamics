@@ -2,11 +2,10 @@ if(!exists('handl_OneDrive')) source('C:/Users/myb/OneDrive - Department of Prim
 
 source(handl_OneDrive("Analyses/SOURCE_SCRIPTS/Git_Population.dynamics/Natural.mortality.R"))
 
+
 fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,MAT,
-                       FecunditY,Cycle,sexratio,spawn.time,AWT,BWT,LO,Resamp)
+                       FecunditY,Cycle,sexratio,spawn.time,AWT,BWT,LO,Resamp,simsout=1e3)
 {
-  Fecu=unlist(FecunditY)
-  
   #samples from univariate distribution
   fn.draw.samples=function(A=Amax,RangeMat=MAT,Rangefec=Fecu,Reprod_cycle=Cycle)
   {
@@ -14,7 +13,7 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     if(length(A)==1) Max.A=A
     if(length(A)>1)if(A[1]==A[2]) Max.A=A[1]
     if(length(A)>1)if(A[1]<A[2]) Max.A=floor(rtriangle(1,a=A[1],b=A[2],c=A[1]))
-
+    
     #Age vector
     age=first.age:Max.A
     
@@ -24,15 +23,15 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     if(RangeMat[1]<RangeMat[2]) age.mat.sim=floor(runif(1,RangeMat[1],RangeMat[2])) 
     
     #fecundity at age
-      #single value
+    #single value
     if(Rangefec[1]==Rangefec[2]) Meanfec.sim=rep(Rangefec[1],length(age))
-      #triangular distribution
+    #triangular distribution
     if(!linear.fec=="YES")
     {
       if(Rangefec[1]<Rangefec[2]) Meanfec.sim=rep(ceiling(rtriangle(1,a=Rangefec[1],b=Rangefec[2],
                                                                     c=ceiling((Rangefec[1]+Rangefec[2])/2))),length(age))
     }
-      #linear increase
+    #linear increase
     if(linear.fec=="YES")
     {
       Meanfec.sim=c(rep(0,age.mat.sim),
@@ -48,7 +47,7 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     
     return(list(Max.A=Max.A,age.mat=age.mat.sim,Meanfec=Meanfec.sim,Rep_cycle=Rep_cycle.sim))    
   }
-
+  
   #samples from multivariate distribution
   fun.multivar=function(mu,stddev,corMat,N)
   {
@@ -66,27 +65,29 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     fecundity=Meanfec*sexratio/CyclE
     
     #maturity
-      #knife edge
+    #knife edge
     maturity=ifelse(age>=age.mat,1,0)   
     maturity[which(age==age.mat)]=0.5   #age.mat is actually 50% maturity
-      #ogive
+    #ogive
     #maturity=plogis(age,age.mat,1)      
     
     # maximum age is plus group
     phi.o=0.0
     cum.survive=1.0
     z=0.0
-    for (i in 2:(max.age)  )
+    for (i in 2:max.age)
     {
       z=M[i] + F.mult*Sel[i]
       z.ts=(M[i]+F.mult*Sel[i])*spawn.time
       phi.o=phi.o+cum.survive*fecundity[i]*maturity[i]*exp(-z.ts)
       cum.survive=cum.survive*exp(-z )
     }
-    #plus group  
-    z= M[max.age+1] + F.mult*Sel[max.age+1]
-    z.ts=(M[max.age+1]+F.mult*Sel[max.age+1])*spawn.time
-    phi.o=phi.o + fecundity[max.age+1]*maturity[max.age+1]*cum.survive*exp(-z.ts)/( 1- exp(-z ) )
+    #plus group
+    if(first.age==0) to=max.age+1
+    if(first.age==1) to=max.age
+    z= M[to] + F.mult*Sel[to]
+    z.ts=(M[to]+F.mult*Sel[to])*spawn.time
+    phi.o=phi.o + fecundity[to]*maturity[to]*cum.survive*exp(-z.ts)/( 1- exp(-z ) )
     
     #maximum lifetime reproductive rate at low density
     alpha=phi.o*surv[1]
@@ -103,6 +104,9 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     return(list(steepness=h,alpha=alpha))  
   }
   
+  Fecu=unlist(FecunditY)
+  
+  
   #Monte Carlo simulations
   Growth.sim=fun.multivar(mu <- c(LINF,K),
                           stddev <- c(Linf.sd,k.sd),
@@ -110,7 +114,7 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
                           N=Nsims)
   Store=rep(NA,Nsims)
   Store.alfa=Store
-  M.all=vector('list',Nsims)
+  M.all=dummies=vector('list',Nsims)
   for(i in 1:Nsims)
   {
     a=fn.draw.samples()
@@ -123,11 +127,13 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     k.sim=Growth.sim[i,2]
     M.sim=M.fun(AGE=age,Amax=A.sim,age.mat=Age.mat.sim,LinF=Linf.sim,kk=k.sim,awt=AWT,bwt=BWT,Lo=LO)
     
+    if(what.M=='age.invariant') M.sim=M.sim$MoRt
+    if(what.M=='at.age') M.sim=M.sim$MoRt.at.age
+    
     Sel=sel.age
-    if(length(Sel)<length(age))
-    {
-      Sel=c(Sel,rep(Sel[length(Sel)],length(age)-length(Sel)))
-    }
+    if(length(Sel)<length(age)) Sel=c(Sel,rep(Sel[length(Sel)],length(age)-length(Sel)))
+    if(length(Sel)>length(age)) Sel=Sel[1:length(age)]
+      
     hh=Stipns(max.age=A.sim,M=M.sim,age.mat=Age.mat.sim,
               Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim,
               Sel)$steepness
@@ -138,7 +144,7 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     #avoid non-sense h
     if(Resamp=="YES")
     {
-      if(hh<0.20)repeat 
+      if(hh<=0.20)repeat 
       {
         a=fn.draw.samples()
         A.sim=a$Max.A
@@ -147,11 +153,14 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
         Meanfec.sim=a$Meanfec
         Reprod_cycle.sim=a$Rep_cycle
         M.sim=M.fun(AGE=age,Amax=A.sim,age.mat=Age.mat.sim,LinF=Linf.sim,kk=k.sim,awt=AWT,bwt=BWT,Lo=LO)
+        
+        if(what.M=='age.invariant') M.sim=M.sim$MoRt
+        if(what.M=='at.age') M.sim=M.sim$MoRt.at.age
+        
         Sel=sel.age
-        if(length(Sel)<length(age))
-        {
-          Sel=c(Sel,rep(Sel[length(Sel)],length(age)-length(Sel)))
-        }
+        if(length(Sel)<length(age)) Sel=c(Sel,rep(Sel[length(Sel)],length(age)-length(Sel)))
+        if(length(Sel)>length(age)) Sel=Sel[1:length(age)]
+        
         hh=Stipns(max.age=A.sim,M=M.sim,age.mat=Age.mat.sim,
                   Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim,
                   Sel)$steepness
@@ -165,25 +174,37 @@ fun.steepness=function(Nsims,K,LINF,Linf.sd,k.sd,first.age,sel.age,F.mult,Amax,M
     Store[i]=hh
     Store.alfa[i]=Alfa
     M.all[[i]]=M.sim
+    dummies[[i]]=data.frame(Max.age=A.sim,Fecundity=mean(Meanfec.sim),Rep.cycle=Reprod_cycle.sim,
+                            Age.mat=Age.mat.sim,Linf=Linf.sim,k=k.sim,M=mean(M.sim),h=hh)
   }
-  if(!Resamp=="YES") Store=Store[Store>=0.2]
-  
+  if(!Resamp=="YES")  Store=Store[Store>0.2]
+ 
+  dummies=do.call(rbind,dummies)
+  dummies=subset(dummies,h>0.2)
+  dummies=dummies[sample(1:nrow(dummies),simsout,replace = T),]
+    
   #get mean and sd from lognormal distribution
-  normal.pars=suppressWarnings(fitdistr(Store, "normal"))
-  gamma.pars=suppressWarnings(fitdistr(Store, "gamma"))  
-  shape=gamma.pars$estimate[1]        
-  rate=gamma.pars$estimate[2]  
+  # normal.pars=suppressWarnings(fitdistr(Store, "normal"))
+  # gamma.pars=suppressWarnings(fitdistr(Store, "gamma"))  
+  # shape=gamma.pars$estimate[1]        
+  # rate=gamma.pars$estimate[2]  
   
-  return(list(shape=shape,rate=rate,
-              mean=normal.pars$estimate[1],
-              sd=normal.pars$estimate[2],
+  return(list(mean=mean(dummies$h),
+              sd=sd(dummies$h),
               M=M.all,
-              Alpha=Store.alfa))
+              Alpha=Store.alfa,
+              Runs=dummies))
+  # return(list(shape=shape,rate=rate,
+  #             mean=normal.pars$estimate[1],
+  #             sd=normal.pars$estimate[2],
+  #             M=M.all,
+  #             Alpha=Store.alfa,
+  #             Runs=dummies))
 }
 
-Alpha.Brooks=function(max.age,M,age.mat,Meanfec,CyclE,sexratio=0.5,spawn.time=0)
+Alpha.Brooks=function(max.age,M,age.mat,Meanfec,CyclE,sexratio=0.5,spawn.time=0,first.age=First.Age)
 {  
-  age=0:max.age
+  age=first.age:max.age
   
   #survivorship
   M=M[1:length(age)]
@@ -210,23 +231,15 @@ Alpha.Brooks=function(max.age,M,age.mat,Meanfec,CyclE,sexratio=0.5,spawn.time=0)
     phi.o=phi.o+cum.survive*fecundity[i]*maturity[i]*exp(-z.ts)
     cum.survive=cum.survive*exp(-z )
   }
-  #plus group  
-  z= M[max.age+1] 
-  z.ts=M[max.age+1]*spawn.time
-  phi.o=phi.o + fecundity[max.age+1]*maturity[max.age+1]*cum.survive*exp(-z.ts)/( 1- exp(-z ) )
+  #plus group
+  if(first.age==0) to=max.age+1
+  if(first.age==1) to=max.age
+  z= M[to] 
+  z.ts=M[to]*spawn.time
+  phi.o=phi.o + fecundity[to]*maturity[to]*cum.survive*exp(-z.ts)/( 1- exp(-z ) )
   
   #maximum lifetime reproductive rate at low density
   alpha=phi.o*surv[1]
   
   return(alpha)  
-}
-
-
-Cortes.Brooks.2018=function(alpha)  #source: Cortes & Brooks 2018
-{
-  if(alpha<=2.67)           Fmsy.to.M.scaler=0.2
-  if(alpha>2.67 & alpha<=6) Fmsy.to.M.scaler=0.5
-  if(alpha>6)               Fmsy.to.M.scaler=0.8
-  
-  return(Fmsy.to.M.scaler)
 }

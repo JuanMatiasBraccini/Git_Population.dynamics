@@ -93,7 +93,8 @@ CatchCurveModel <- function(params) {
   CatchAtLen = CatchAtLen + Catch[1,]
   
   # apply mortality to calculate survival
-  for (t in 2:MaxAge) {
+  for (t in 2:MaxAge)
+  {
     if (t < MaxAge) {
       Fish_FemSurvPerRecAtAge[t,] = Fish_FemNPerRecAtAge[t-1,] * exp(-ZAtLen)
     } else {

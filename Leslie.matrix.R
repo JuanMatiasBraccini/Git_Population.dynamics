@@ -61,7 +61,7 @@ fun.Leslie=function(N.sims,k,Linf,k.sd,Linf.sd,k.Linf.cor,A,first.age,RangeMat,R
     if(length(Reprod_cycle)==1) Rep_cycle.sim=Reprod_cycle else
     {
       if(Reprod_cycle[1]==Reprod_cycle[2]) Rep_cycle.sim=round(Reprod_cycle[1])
-      if(Reprod_cycle[1]<Reprod_cycle[2]) Rep_cycle.sim=round(runif(1,Reprod_cycle[1],Reprod_cycle[2]))    
+      if(Reprod_cycle[1]<Reprod_cycle[2]) Rep_cycle.sim=sample(Reprod_cycle,1,replace=T)    
     }
     
     return(list(Max.A=Max.A,age.mat=age.mat.sim,Meanfec=Meanfec.sim,Rep_cycle=Rep_cycle.sim))    
@@ -111,14 +111,17 @@ fun.Leslie=function(N.sims,k,Linf,k.sd,Linf.sd,k.Linf.cor,A,first.age,RangeMat,R
     Data=rbind(matrix(0,nrow=1,ncol=n),Data)
     Data=Data[-(n+1),]
     Data[1,]=BX
-    rownames(Data)=colnames(Data)=(first.age+1):n
+    if(first.age==0) from=first.age+1
+    if(first.age==1) from=first.age
+    rownames(Data)=colnames(Data)=from:n
     
     #solve projection matrix
     LAMBDA=lambda(Data)
     r=log(LAMBDA)  
-    t2=log(2)/r 
+    t2=log(2)/r # doubling time
+    G=sum(age*lx*mx*exp(-(r*age))) # generation time Cortes 2002
     
-    return(list(r=r,t2=t2,lambda=LAMBDA,M=M))  
+    return(list(r=r,t2=t2,lambda=LAMBDA,M=M,G=G))  
   }
   
   #Monte Carlo simulations
@@ -127,6 +130,8 @@ fun.Leslie=function(N.sims,k,Linf,k.sd,Linf.sd,k.Linf.cor,A,first.age,RangeMat,R
                           corMat <- matrix(c(1, k.Linf.cor,k.Linf.cor, 1),ncol = 2),
                           N=N.sims)
   Store=vector('list',length(N.sims))
+  Input.pars=Store
+  nat.mort.sim=Store
   for(i in 1:N.sims)
   {
     a=fn.draw.samples()
@@ -138,7 +143,10 @@ fun.Leslie=function(N.sims,k,Linf,k.sd,Linf.sd,k.Linf.cor,A,first.age,RangeMat,R
     Linf.sim=Growth.sim[i,1]
     k.sim=Growth.sim[i,2]
     M.sim=M.fun(AGE=age,Amax=A.sim,age.mat=Age.mat.sim,LinF=Linf.sim,
-                kk=k.sim,awt=awt,bwt=bwt,Lo=Lo)
+                kk=k.sim,awt=awt,bwt=bwt,Lo=Lo)   
+    if(GET.all.Ms) nat.mort.sim[[i]]=M.sim$nat.mort
+    if(what.M=='age.invariant') M.sim=M.sim$MoRt
+    if(what.M=='at.age') M.sim=M.sim$MoRt.at.age
     Store[[i]]=Leslie(M=M.sim,age.mat=Age.mat.sim,Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim)
     rr=Store[[i]]$r
     
@@ -154,14 +162,79 @@ fun.Leslie=function(N.sims,k,Linf,k.sd,Linf.sd,k.Linf.cor,A,first.age,RangeMat,R
         Meanfec.sim=a$Meanfec
         Reprod_cycle.sim=a$Rep_cycle
         M.sim=M.fun(AGE=age,Amax=A.sim,age.mat=Age.mat.sim,LinF=Linf.sim,kk=k.sim,awt=awt,bwt=bwt,Lo=Lo)
+        nat.mort.sim[[i]]=M.sim$nat.mort
+        if(what.M=='age.invariant') M.sim=M.sim$MoRt
+        if(what.M=='at.age') M.sim=M.sim$MoRt.at.age
         Store[[i]]=Leslie(M=M.sim,age.mat=Age.mat.sim,Meanfec=Meanfec.sim,CyclE=Reprod_cycle.sim)
         rr=Store[[i]]$r
         if(rr>0)break
       }
     }
+    
+    Input.pars[[i]]=list(Max.age=A.sim,
+                         Age.mat=Age.mat.sim,
+                         Meanfec=mean(Meanfec.sim),
+                         Reprod_cycle=Reprod_cycle.sim,
+                         Linf=Linf.sim,
+                         k=k.sim)
   }
   
   r.prior=do.call("c", lapply(Store, "[[", 1))
   M.all=do.call("list", lapply(Store, "[[", 4))
-  return(list(r.prior=r.prior,M=M.all))
+  G.all=do.call("c", lapply(Store, "[[", 5))
+  
+  if(GET.all.Ms) 
+  {
+   for(e in 1:length(nat.mort.sim))
+    {
+     if(first.age==0) to=nrow(nat.mort.sim[[e]])-1
+     if(first.age==1) to=nrow(nat.mort.sim[[e]])
+     nat.mort.sim[[e]]$Age=first.age:to  
+    }
+    nat.mort.sim=plyr::compact(nat.mort.sim)
+    nat.mort.sim=do.call(rbind,nat.mort.sim)%>%
+      tidyr::gather(key = "Method", value = "M", -Age)%>%
+      dplyr::mutate(Age=factor(Age,levels=min(Age):max(Age)))%>%
+      dplyr::group_by(Age,Method)%>%
+      dplyr::summarise(M.mean=mean(M,na.rm=T),
+                M.sd=sd(M,na.rm=T))%>%
+      dplyr::ungroup()%>%
+      dplyr::mutate(M.CV=M.sd/M.mean)
+    
+  }
+  if(GET.all.Ms)
+  {
+    return(list(r.prior=r.prior,M=M.all,Input.pars=Input.pars,G=G.all,nat.mort.sim=nat.mort.sim))
+  }else
+  {
+    return(list(r.prior=r.prior,M=M.all,Input.pars=Input.pars,G=G.all))
+  }
+}
+fun.rprior.dist=function(Nsims,K,LINF,K.sd,LINF.sd,k.Linf.cor,Amax,MAT,FecunditY,
+                         Cycle,BWT,AWT,LO)
+{
+  Fecu=unlist(FecunditY)
+  Rprior=fun.Leslie(N.sims=Nsims,k=K,Linf=LINF,k.sd=K.sd,Linf.sd=LINF.sd,k.Linf.cor=k.Linf.cor,
+                    A=Amax,first.age=First.Age,RangeMat=MAT,Rangefec=Fecu,
+                    sexratio=0.5,Reprod_cycle=Cycle,
+                    bwt=BWT,awt=AWT,Lo=LO,
+                    Resamp=RESAMP)  
+  
+  #get mean and sd from gamma and normal distribution
+  normal.pars=suppressWarnings(fitdistr(Rprior$r.prior, "normal"))
+  gamma.pars=suppressWarnings(fitdistr(Rprior$r.prior, "gamma"))  
+  shape=gamma.pars$estimate[1]        
+  rate=gamma.pars$estimate[2]      
+  return(list(shape=shape,rate=rate,
+              mean=normal.pars$estimate[1],sd=normal.pars$estimate[2],
+              M=Rprior$M,
+              G=Rprior$G,
+              Input.pars=Rprior$Input.pars,
+              nat.mort.sim=Rprior$nat.mort.sim))
+  
+  #get mean and sd from lognormal distribution
+  #LogN.pars=fitdistr(Rprior, "lognormal")  
+  #log_mean.r=LogN.pars$estimate[1]    #already in log space     
+  #log_sd.r=LogN.pars$estimate[2]      #already in log space     
+  #return(list(log_mean.r=log_mean.r,log_sd.r=log_sd.r))
 }
