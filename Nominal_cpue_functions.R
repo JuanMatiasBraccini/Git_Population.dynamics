@@ -56,7 +56,8 @@ CalcQL = function(dat, catch.column="catch", prop.column="prop", season.column="
 ##=================================================================================================
 
 CalcMeanCPUE = function(cpuedata, catch.column="catch", effort.column="effort",
-                        plot.title, cpue.units, draw.plot=TRUE, show.legend=FALSE,PaR,showLNMean)
+                        plot.title, cpue.units, draw.plot=TRUE, show.legend=FALSE,PaR,showLNMean,
+                        out.CV=FALSE)
   {
     eval(parse(text=paste("cpuedata$catch = cpuedata[, which(names(cpuedata)=='", catch.column, "')]", sep='')))
     eval(parse(text=paste("cpuedata$effort = cpuedata[, which(names(cpuedata)=='", effort.column, "')]", sep='')))
@@ -133,7 +134,22 @@ CalcMeanCPUE = function(cpuedata, catch.column="catch", effort.column="effort",
     cpue.results = merge(out1, out2, all=TRUE)
     cpue.results = merge(cpue.results, out3, all=TRUE)
     cpue.results = merge(cpue.results, out4, all=TRUE)
-    cpue.results = subset(cpue.results, select = c(season, method, mean, lowCL, uppCL))
+    if(out.CV)
+    {
+      cpue.results=cpue.results%>%
+                    mutate(SE=case_when(method=='Nominal'~se,
+                                        method=='Mean'~sd/sqrt(n),
+                                        method=='LnMean'~(mean-lowCL)/1.96,
+                                        method=='DLnMean'~(mean-lowCL)/1.96),
+                           CV=SE/mean,
+                           CV=ifelse(is.na(CV) & mean==0,0,CV))
+        
+      cpue.results = subset(cpue.results, select = c(season, method, mean, lowCL, uppCL,CV,SE))
+    }else
+    {
+      cpue.results = subset(cpue.results, select = c(season, method, mean, lowCL, uppCL))
+    }
+      
     cpue.results = cpue.results[order(cpue.results$method, cpue.results$season), ]
     
     ymax = max(c(out1$uppCL, out2$uppCL, out3$uppCL, out4$uppCL),na.rm=T)
