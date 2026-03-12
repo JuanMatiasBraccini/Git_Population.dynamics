@@ -32,7 +32,7 @@ add.Frequentist.plot=function(p,Estimates)
   return(p)
 
 }
-fit.growth.curve=function(SP,dat,LH,N.sims=1e4,K.max=1)
+fit.growth.curve=function(SP,dat,LH,N.sims=1e4,K.max=1) 
 {
   ii=match(names(SP),names(dat))
   dd=dat[[ii]]$age_length%>%
