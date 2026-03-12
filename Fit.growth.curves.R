@@ -76,7 +76,6 @@ fit.growth.curve=function(SP,dat,LH,N.sims=1e4,K.max=1)
     
   }
   
-  #Females
   SeXes=unique(dd$Sex)
   SeXes=subset(SeXes,!SeXes%in%c('','U'))
   for(x in 1:length(SeXes))
